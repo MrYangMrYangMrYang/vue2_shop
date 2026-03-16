@@ -19,7 +19,9 @@ const SearchList = () => import('@/views/search/list')
 Vue.use(VueRouter)
 
 const router = new VueRouter({
-  // 配置路由规则
+  // 路由模式
+  mode: 'history', //  'history'模式
+  // 路由规则
   routes: [
     { path: '/login', component: Login },
     // 首页嵌套二级路由
