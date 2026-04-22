@@ -64,50 +64,76 @@ export default {
 </script>
 
 <style lang="less" scoped>
+@import '@/styles/variables.less';
+
 .search {
+  background-color: #fff;
+  min-height: 100vh;
+
   .searchBtn {
-    background-color: #fa2209;
+    background-color: @price-color;
     color: #fff;
+    border-radius: 4px;
+    padding: 0 @spacing-md;
   }
+
   ::v-deep .van-search__action {
-    background-color: #c21401;
+    background-color: @primary-color;
     color: #fff;
-    padding: 0 20px;
-    border-radius: 0 5px 5px 0;
-    margin-right: 10px;
+    padding: 0 @spacing-lg;
+    border-radius: 0 4px 4px 0;
+    margin-right: @spacing-md;
+    font-weight: 500;
+    transition: @transition-base;
+    &:active {
+      opacity: @active-opacity;
+    }
   }
+
   ::v-deep .van-icon-arrow-left {
-    color: #333;
+    color: @text-color;
   }
-  .title {
-    height: 40px;
-    line-height: 40px;
-    font-size: 14px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0 15px;
-  }
-  .list {
-    display: flex;
-    justify-content: flex-start;
-    flex-wrap: wrap;
-    padding: 0 10px;
-    gap: 5%;
-  }
-  .list-item {
-    width: 30%;
-    text-align: center;
-    padding: 7px;
-    line-height: 15px;
-    border-radius: 50px;
-    background: #fff;
-    font-size: 13px;
-    border: 1px solid #efefef;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    margin-bottom: 10px;
+
+  .search-history {
+    padding: @spacing-lg;
+
+    .title {
+      height: 40px;
+      line-height: 40px;
+      font-size: 15px;
+      font-weight: 500;
+      color: @text-color;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: @spacing-md;
+    }
+
+    .list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+      gap: @spacing-md;
+    }
+
+    .list-item {
+      text-align: center;
+      padding: @spacing-sm @spacing-md;
+      line-height: 1.2;
+      border-radius: 20px;
+      background: @gray-color;
+      font-size: 13px;
+      color: @text-color;
+      border: 1px solid transparent;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      transition: @transition-base;
+
+      &:active {
+        background: darken(@gray-color, 5%);
+        transform: scale(@active-scale);
+      }
+    }
   }
 }
 </style>

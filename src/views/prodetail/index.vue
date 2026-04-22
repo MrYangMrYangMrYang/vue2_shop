@@ -2,81 +2,76 @@
   <div class="prodetail">
     <van-nav-bar fixed title="商品详情页" left-arrow @click-left="$router.go(-1)" />
 
-    <van-swipe :autoplay="3000" @change="onChange">
-      <van-swipe-item v-for="image in images" :key="image.file_id">
-        <img :src="image.external_url" />
-      </van-swipe-item>
+    <van-skeleton title avatar :row="10" :loading="loading">
+      <van-swipe :autoplay="3000" @change="onChange">
+        <van-swipe-item v-for="image in images" :key="image.file_id">
+          <img :src="image.external_url" />
+        </van-swipe-item>
 
-      <template #indicator>
-        <div class="custom-indicator">{{ current + 1 }} / {{ images.length }}</div>
-      </template>
-    </van-swipe>
+        <template #indicator>
+          <div class="custom-indicator">{{ current + 1 }} / {{ images.length }}</div>
+        </template>
+      </van-swipe>
 
-    <!-- 商品说明 -->
-    <div class="info">
-      <div class="title">
-        <div class="price">
-          <span class="now">￥{{ detail.goods_price_min }}</span>
-          <span class="oldprice">￥{{ detail.goods_price_max }}</span>
-        </div>
-        <div class="sellcount">已售 {{ detail.goods_sales }} 件</div>
-      </div>
-      <div class="msg text-ellipsis-2">
-        {{ detail.goods_name }}
-      </div>
-
-      <div class="service">
-        <div class="left-words">
-          <span><van-icon name="passed" />七天无理由退货</span>
-          <span><van-icon name="passed" />48小时发货</span>
-        </div>
-        <div class="right-icon">
-          <van-icon name="arrow" />
-        </div>
-      </div>
-    </div>
-
-    <!-- 商品评价 -->
-    <div class="comment">
-      <div class="comment-title">
-        <div class="left">商品评价 ({{ total }}条)</div>
-        <div class="right">查看更多 <van-icon name="arrow" /> </div>
-      </div>
-      <div class="comment-list">
-        <div class="comment-item" v-for="item in commentList" :key="item.comment_id">
-          <div class="top">
-            <img :src="item.user.avatar_url || defaultImg" alt="">
-            <div class="name">{{ item.user.nick_name }}</div>
-            <van-rate :size="16" :value="item.score / 2" color="#ffd21e" void-icon="star" void-color="#eee"/>
+      <!-- 商品说明 -->
+      <div class="info">
+        <div class="title">
+          <div class="price">
+            <span class="now">￥{{ formatPrice(detail.goods_price_min) }}</span>
+            <span class="oldprice">￥{{ formatPrice(detail.goods_price_max) }}</span>
           </div>
-          <div class="content">
-            {{ item.content }}
+          <div class="sellcount">已售 {{ detail.goods_sales }} 件</div>
+        </div>
+        <div class="msg text-ellipsis-2">
+          {{ detail.goods_name }}
+        </div>
+
+        <div class="service">
+          <div class="left-words">
+            <span><van-icon name="passed" />七天无理由退货</span>
+            <span><van-icon name="passed" />48小时发货</span>
           </div>
-          <div class="time">
-            {{ item.create_time }}
+          <div class="right-icon">
+            <van-icon name="arrow" />
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- 商品描述 -->
-    <div class="desc" v-html="detail.content">
-    </div>
+      <!-- 商品评价 -->
+      <div class="comment">
+        <div class="comment-title">
+          <div class="left">商品评价 ({{ total }}条)</div>
+          <div class="right">查看更多 <van-icon name="arrow" /> </div>
+        </div>
+        <div class="comment-list">
+          <div class="comment-item" v-for="item in commentList" :key="item.comment_id">
+            <div class="top">
+              <img :src="item.user.avatar_url || defaultImg" alt="">
+              <div class="name">{{ item.user.nick_name }}</div>
+              <van-rate :size="16" :value="item.score / 2" color="#ffd21e" void-icon="star" void-color="#eee"/>
+            </div>
+            <div class="content">
+              {{ item.content }}
+            </div>
+            <div class="time">
+              {{ item.create_time }}
+            </div>
+          </div>
+        </div>
+      </div>
 
-    <!-- 底部 -->
-    <div class="footer">
-      <div @click="$router.push('/')" class="icon-home">
-        <van-icon name="wap-home-o" />
-        <span>首页</span>
+      <!-- 商品描述 -->
+      <div class="desc" v-html="detail.content">
       </div>
-      <div @click="$router.push('/cart')" class="icon-cart">
-        <span v-if="cartTotal > 0" class="num">{{ cartTotal }}</span>
-        <van-icon name="shopping-cart-o" />
-        <span>购物车</span>
-      </div>
-      <div @click="add"  class="btn-add">加入购物车</div>
-      <div @click="buy" class="btn-buy">立刻购买</div>
-    </div>
+    </van-skeleton>
+
+    <!-- 底部操作栏 (使用 Vant 组件) -->
+    <van-goods-action>
+      <van-goods-action-icon icon="wap-home-o" text="首页" @click="$router.push('/')" />
+      <van-goods-action-icon icon="shopping-cart-o" text="购物车" :badge="cartTotal > 0 ? cartTotal : ''" @click="$router.push('/cart')" />
+      <van-goods-action-button type="warning" text="加入购物车" @click="add" />
+      <van-goods-action-button type="danger" text="立即购买" @click="buy" />
+    </van-goods-action>
 
     <!-- 加入购物车/立即购买 公用的弹层 -->
     <van-action-sheet v-model="showPannel" :title="mode === 'cart' ? '加入购物车' : '立刻购买'">
@@ -97,7 +92,7 @@
           </div>
         </div>
         <div class="num-box">
-          <span>数量</span>
+          <span class="label">数量</span>
           <!-- v-model 本质上 :value 和 @input 的简写 -->
           <CountBox v-model="changeCount"></CountBox>
         </div>
@@ -119,6 +114,7 @@ import { getProDetail, getProComments } from '@/api/prodetail'
 import defaultImg from '@/assets/default-avatar.png'
 import CountBox from '@/components/CountBox.vue'
 import loginConfirm from '@/mixins/loginConfirm'
+import { formatPrice } from '@/utils/format'
 
 export default {
   name: 'ProDetailPage',
@@ -137,7 +133,8 @@ export default {
       showPannel: false, // 控制弹层的显示隐藏
       mode: 'cart', // 标记弹层状态
       changeCount: 1, // 数字框绑定的数据(默认是1)
-      cartTotal: 0 // 购物车商品总数(购物车角标数字)
+      cartTotal: 0, // 购物车商品总数(购物车角标数字)
+      loading: true // 加载状态
     }
   },
   computed: {
@@ -146,10 +143,17 @@ export default {
     }
   },
   created () {
-    this.getDetail()
-    this.getComments()
+    this.initData()
   },
   methods: {
+    formatPrice,
+    async initData () {
+      try {
+        await Promise.all([this.getDetail(), this.getComments()])
+      } finally {
+        this.loading = false
+      }
+    },
     onChange (index) {
       this.current = index
     },
@@ -201,173 +205,199 @@ export default {
 </script>
 
 <style lang="less" scoped>
+@import '@/styles/variables.less';
+
 .prodetail {
-  padding-top: 46px;
+  padding-bottom: 50px;
+  background-color: @gray-color;
+  min-height: 100vh;
+}
+
+.van-nav-bar {
   ::v-deep .van-icon-arrow-left {
-    color: #333;
+    color: @text-color;
   }
+}
+
+.van-swipe {
   img {
-    display: block;
     width: 100%;
+    aspect-ratio: 1/1;
+    object-fit: cover;
   }
-  .custom-indicator {
-    position: absolute;
-    right: 10px;
-    bottom: 10px;
-    padding: 5px 10px;
-    font-size: 12px;
-    background: rgba(0, 0, 0, 0.1);
-    border-radius: 15px;
-  }
-  .desc {
-    width: 100%;
-    overflow: scroll;
-    ::v-deep img {
-      display: block;
-      width: 100%!important;
-    }
-  }
-  .info {
-    padding: 10px;
-  }
+}
+
+.custom-indicator {
+  position: absolute;
+  right: @spacing-lg;
+  bottom: @spacing-lg;
+  padding: 2px @spacing-sm;
+  font-size: 12px;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  color: #fff;
+}
+
+.info {
+  padding: @spacing-lg;
+  background-color: #fff;
+  margin-bottom: @spacing-sm;
+
   .title {
     display: flex;
     justify-content: space-between;
-    .now {
-      color: #fa2209;
-      font-size: 20px;
-    }
-    .oldprice {
-      color: #959595;
-      font-size: 16px;
-      text-decoration: line-through;
-      margin-left: 5px;
+    align-items: flex-end;
+    margin-bottom: @spacing-md;
+
+    .price {
+      .now {
+        color: @price-color;
+        font-size: 24px;
+        font-weight: 500;
+      }
+      .oldprice {
+        color: @text-light-color;
+        text-decoration: line-through;
+        font-size: 14px;
+        margin-left: @spacing-sm;
+      }
     }
     .sellcount {
-      color: #959595;
-      font-size: 16px;
-      position: relative;
-      top: 4px;
+      color: @text-light-color;
+      font-size: 13px;
     }
   }
+
   .msg {
     font-size: 16px;
-    line-height: 24px;
-    margin-top: 5px;
+    line-height: 1.5;
+    color: @text-color;
+    font-weight: 500;
+    margin-bottom: @spacing-lg;
   }
+
   .service {
     display: flex;
     justify-content: space-between;
-    line-height: 40px;
-    margin-top: 10px;
-    font-size: 16px;
+    align-items: center;
+    padding: @spacing-md;
     background-color: #fafafa;
+    border-radius: @border-radius;
+    font-size: 12px;
+    color: @text-light-color;
+
     .left-words {
       span {
-        margin-right: 10px;
-      }
-      .van-icon {
-        margin-right: 4px;
-        color: #fa2209;
+        margin-right: @spacing-lg;
+        .van-icon {
+          color: @price-color;
+          margin-right: 2px;
+        }
       }
     }
   }
+}
 
-  .comment {
-    padding: 10px;
-  }
+.comment {
+  padding: @spacing-lg;
+  background-color: #fff;
+  margin-bottom: @spacing-sm;
+
   .comment-title {
     display: flex;
     justify-content: space-between;
-    .right {
-      color: #959595;
-    }
-  }
-
-  .comment-item {
-    font-size: 16px;
-    line-height: 30px;
-    .top {
-      height: 30px;
-      display: flex;
-      align-items: center;
-      margin-top: 20px;
-      img {
-        width: 20px;
-        height: 20px;
-      }
-      .name {
-        margin: 0 10px;
-      }
-    }
-    .time {
-      color: #999;
-    }
-  }
-
-  .footer {
-    position: fixed;
-    left: 0;
-    bottom: 0;
-    width: 100%;
-    height: 55px;
-    background-color: #fff;
-    border-top: 1px solid #ccc;
-    display: flex;
-    justify-content: space-evenly;
     align-items: center;
-    .icon-home, .icon-cart {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      font-size: 14px;
-      .van-icon {
-        font-size: 24px;
+    padding-bottom: @spacing-md;
+    border-bottom: 1px solid @gray-color;
+    font-size: 14px;
+
+    .left {
+      color: @text-color;
+      font-weight: 500;
+    }
+    .right {
+      color: @text-light-color;
+      font-size: 13px;
+    }
+  }
+
+  .comment-list {
+    .comment-item {
+      padding: @spacing-md 0;
+      border-bottom: 1px solid @gray-color;
+      &:last-child {
+        border-bottom: none;
       }
-    }
-    .btn-add,
-    .btn-buy {
-      height: 36px;
-      line-height: 36px;
-      width: 120px;
-      border-radius: 18px;
-      background-color: #ffa900;
-      text-align: center;
-      color: #fff;
-      font-size: 14px;
-    }
-    .btn-buy {
-      background-color: #fe5630;
+
+      .top {
+        display: flex;
+        align-items: center;
+        margin-bottom: @spacing-sm;
+
+        img {
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
+          margin-right: @spacing-sm;
+        }
+        .name {
+          flex: 1;
+          font-size: 13px;
+          color: @text-color;
+        }
+      }
+      .content {
+        font-size: 14px;
+        line-height: 1.5;
+        color: @text-color;
+        margin-bottom: @spacing-xs;
+      }
+      .time {
+        font-size: 12px;
+        color: @text-light-color;
+      }
     }
   }
 }
 
-.tips {
-  padding: 10px;
+.desc {
+  background-color: #fff;
+  padding: @spacing-lg;
+  ::v-deep img {
+    display: block;
+    width: 100%;
+  }
 }
 
-// 弹层的样式
 .product {
+  padding: @spacing-xl;
+
   .product-title {
     display: flex;
-    .left {
-      img {
-        width: 90px;
-        height: 90px;
-      }
-      margin: 10px;
+    margin-bottom: @spacing-xl;
+
+    .left img {
+      width: 90px;
+      height: 90px;
+      object-fit: cover;
+      border-radius: @border-radius;
     }
     .right {
       flex: 1;
-      padding: 10px;
+      padding-left: @spacing-lg;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+
       .price {
-        font-size: 14px;
-        color: #fe560a;
-        .nowprice {
-          font-size: 24px;
-          margin: 0 5px;
-        }
+        color: @price-color;
+        margin-bottom: @spacing-sm;
+        span { font-size: 14px; }
+        .nowprice { font-size: 24px; font-weight: 500; }
+      }
+      .count {
+        color: @text-light-color;
+        font-size: 13px;
       }
     }
   }
@@ -375,41 +405,41 @@ export default {
   .num-box {
     display: flex;
     justify-content: space-between;
-    padding: 10px;
     align-items: center;
+    padding: @spacing-lg 0;
+    border-top: 1px solid @gray-color;
+    margin-bottom: @spacing-xl;
+    .label { font-size: 14px; color: @text-color; font-weight: 500; }
   }
 
-  .btn, .btn-none {
-    height: 40px;
-    line-height: 40px;
-    margin: 20px;
-    border-radius: 20px;
-    text-align: center;
-    color: rgb(255, 255, 255);
-    background-color: rgb(255, 148, 2);
-  }
-  .btn.now {
-    background-color: #fe5630;
+  .showbtn {
+    .btn {
+      height: 44px;
+      line-height: 44px;
+      text-align: center;
+      background: linear-gradient(90deg, #ffd01e, #ff8917);
+      color: #fff;
+      border-radius: 22px;
+      font-size: 16px;
+      font-weight: 500;
+      transition: @transition-base;
+      &:active {
+        transform: scale(@active-scale);
+        opacity: @active-opacity;
+      }
+      &.now {
+        background: linear-gradient(90deg, #ff6034, #ee0a24);
+      }
+    }
   }
   .btn-none {
-    background-color: #cccccc;
-  }
-}
-
-.footer .icon-cart {
-  position: relative;
-  padding: 0 6px;
-  .num {
-    z-index: 999;
-    position: absolute;
-    top: -2px;
-    right: 0;
-    min-width: 16px;
-    padding: 0 4px;
-    color: #fff;
+    height: 44px;
+    line-height: 44px;
     text-align: center;
-    background-color: #ee0a24;
-    border-radius: 50%;
+    background-color: #ccc;
+    color: #fff;
+    border-radius: 22px;
+    font-size: 16px;
   }
 }
 </style>

@@ -20,7 +20,8 @@ Vue.use(VueRouter)
 
 const router = new VueRouter({
   // 路由模式
-  mode: 'history', //  'history'模式
+  mode: 'history', // 使用 history 模式，URL 更美观
+  base: process.env.BASE_URL, // 设置基础路径，与 vue.config.js 中的 publicPath 保持一致
   // 路由规则
   routes: [
     { path: '/login', component: Login },

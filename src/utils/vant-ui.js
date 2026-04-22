@@ -1,6 +1,6 @@
 // 按需导入vant组件
 import Vue from 'vue'
-import { Tab, Tabs, Checkbox, Dialog, ActionSheet, Icon, Search, Swipe, SwipeItem, Grid, GridItem, Toast, Button, Switch, Rate, Tabbar, TabbarItem, NavBar } from 'vant'
+import { Tab, Tabs, Checkbox, Dialog, ActionSheet, Icon, Search, Swipe, SwipeItem, Grid, GridItem, Toast, Button, Switch, Rate, Tabbar, TabbarItem, NavBar, Skeleton, Divider, GoodsAction, GoodsActionIcon, GoodsActionButton, SubmitBar } from 'vant'
 
 Vue.use(Tab)
 Vue.use(Tabs)
@@ -20,3 +20,9 @@ Vue.use(TabbarItem)
 Vue.use(Rate)
 Vue.use(Button)
 Vue.use(Switch)
+Vue.use(Skeleton)
+Vue.use(Divider)
+Vue.use(GoodsAction)
+Vue.use(GoodsActionIcon)
+Vue.use(GoodsActionButton)
+Vue.use(SubmitBar)

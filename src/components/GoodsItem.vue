@@ -7,16 +7,18 @@
       <p class="tit text-ellipsis-2">
         {{ item.goods_name }}
       </p>
-      <p class="count">{{ item.goods_sales }}</p>
+      <p class="count">已售 {{ formatSales(item.goods_sales) }}</p>
       <p class="price">
-        <span class="new">{{ item.goods_min }}</span>
-        <span class="old">{{ item.goods_max }}</span>
+        <span class="new">￥{{ formatPrice(item.goods_min) }}</span>
+        <span class="old">￥{{ formatPrice(item.goods_max) }}</span>
       </p>
     </div>
   </div>
 </template>
 
 <script>
+import { formatPrice, formatSales } from '@/utils/format'
+
 export default {
   name: 'GoodsItem',
   // 接收父组件传过来的数据
@@ -27,43 +29,53 @@ export default {
         return {}
       }
     }
+  },
+  methods: {
+    formatPrice,
+    formatSales
   }
 }
 </script>
 
 <style lang="less" scoped>
+@import '@/styles/variables.less';
+
 .goods-item {
   height: 148px;
   margin-bottom: 6px;
   padding: 10px;
   background-color: #fff;
   display: flex;
+  border-radius: @border-radius;
   .left {
     width: 127px;
     img {
       display: block;
       width: 100%;
+      height: 100%;
+      object-fit: contain;
     }
   }
   .right {
     flex: 1;
     font-size: 14px;
     line-height: 1.3;
-    padding: 10px;
+    padding: 0 10px;
     display: flex;
     flex-direction: column;
     justify-content: space-evenly;
 
     .count {
-      color: #999;
+      color: @text-light-color;
       font-size: 12px;
     }
     .price {
-      color: #999;
+      color: @text-light-color;
       font-size: 16px;
       .new {
-        color: #f03c3c;
+        color: @price-color;
         margin-right: 10px;
+        font-weight: bold;
       }
       .old {
         text-decoration: line-through;

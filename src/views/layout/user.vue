@@ -1,102 +1,104 @@
 <template>
   <div class="user">
-    <div class="head-page" v-if="isLogin">
-      <div class="head-img">
-        <img src="@/assets/default-avatar.png" alt="" />
-      </div>
-      <div class="info">
-        <div class="mobile">{{ detail.mobile }}</div>
-        <div class="vip">
-          <van-icon name="diamond-o" />
-          普通会员
+    <van-skeleton title avatar :row="6" :loading="loading">
+      <div class="head-page" v-if="isLogin">
+        <div class="head-img">
+          <img src="@/assets/default-avatar.png" alt="" />
+        </div>
+        <div class="info">
+          <div class="mobile">{{ detail.mobile }}</div>
+          <div class="vip">
+            <van-icon name="diamond-o" />
+            普通会员
+          </div>
         </div>
       </div>
-    </div>
 
-    <div v-else class="head-page" @click="$router.push('/login')">
-      <div class="head-img">
-        <img src="@/assets/default-avatar.png" alt="" />
+      <div v-else class="head-page" @click="$router.push('/login')">
+        <div class="head-img">
+          <img src="@/assets/default-avatar.png" alt="" />
+        </div>
+        <div class="info">
+          <div class="mobile">未登录</div>
+          <div class="words">点击登录账号</div>
+        </div>
       </div>
-      <div class="info">
-        <div class="mobile">未登录</div>
-        <div class="words">点击登录账号</div>
-      </div>
-    </div>
 
-    <div class="my-asset">
-      <div class="asset-left">
-        <div class="asset-left-item">
-          <span>{{ detail.pay_money || 0 }}</span>
-          <span>账户余额</span>
+      <div class="my-asset">
+        <div class="asset-left">
+          <div class="asset-left-item">
+            <span>{{ detail.pay_money || 0 }}</span>
+            <span>账户余额</span>
+          </div>
+          <div class="asset-left-item">
+            <span>0</span>
+            <span>积分</span>
+          </div>
+          <div class="asset-left-item">
+            <span>0</span>
+            <span>优惠券</span>
+          </div>
         </div>
-        <div class="asset-left-item">
-          <span>0</span>
-          <span>积分</span>
-        </div>
-        <div class="asset-left-item">
-          <span>0</span>
-          <span>优惠券</span>
+        <div class="asset-right">
+          <div class="asset-right-item">
+            <van-icon name="balance-pay" />
+            <span>我的钱包</span>
+          </div>
         </div>
       </div>
-      <div class="asset-right">
-        <div class="asset-right-item">
-          <van-icon name="balance-pay" />
-          <span>我的钱包</span>
+      <div class="order-navbar">
+        <div class="order-navbar-item" @click="$router.push('/order?dataType=all')">
+          <van-icon name="balance-list-o" />
+          <span>全部订单</span>
+        </div>
+        <div class="order-navbar-item" @click="$router.push('/order?dataType=payment')">
+          <van-icon name="clock-o" />
+          <span>待支付</span>
+        </div>
+        <div class="order-navbar-item" @click="$router.push('/order?dataType=delivery')">
+          <van-icon name="logistics" />
+          <span>待发货</span>
+        </div>
+        <div class="order-navbar-item" @click="$router.push('/order?dataType=received')">
+          <van-icon name="send-gift-o" />
+          <span>待收货</span>
         </div>
       </div>
-    </div>
-    <div class="order-navbar">
-      <div class="order-navbar-item" @click="$router.push('/order?dataType=all')">
-        <van-icon name="balance-list-o" />
-        <span>全部订单</span>
-      </div>
-      <div class="order-navbar-item" @click="$router.push('/order?dataType=payment')">
-        <van-icon name="clock-o" />
-        <span>待支付</span>
-      </div>
-      <div class="order-navbar-item" @click="$router.push('/order?dataType=delivery')">
-        <van-icon name="logistics" />
-        <span>待发货</span>
-      </div>
-      <div class="order-navbar-item" @click="$router.push('/order?dataType=received')">
-        <van-icon name="send-gift-o" />
-        <span>待收货</span>
-      </div>
-    </div>
 
-    <div class="service">
-      <div class="title">我的服务</div>
-      <div class="content">
-        <div class="content-item">
-          <van-icon name="records" />
-          <span>收货地址</span>
-        </div>
-        <div class="content-item">
-          <van-icon name="gift-o" />
-          <span>领券中心</span>
-        </div>
-        <div class="content-item">
-          <van-icon name="gift-card-o" />
-          <span>优惠券</span>
-        </div>
-        <div class="content-item">
-          <van-icon name="question-o" />
-          <span>我的帮助</span>
-        </div>
-        <div class="content-item">
-          <van-icon name="balance-o" />
-          <span>我的积分</span>
-        </div>
-        <div class="content-item">
-          <van-icon name="refund-o" />
-          <span>退换/售后</span>
+      <div class="service">
+        <div class="title">我的服务</div>
+        <div class="content">
+          <div class="content-item">
+            <van-icon name="records" />
+            <span>收货地址</span>
+          </div>
+          <div class="content-item">
+            <van-icon name="gift-o" />
+            <span>领券中心</span>
+          </div>
+          <div class="content-item">
+            <van-icon name="gift-card-o" />
+            <span>优惠券</span>
+          </div>
+          <div class="content-item">
+            <van-icon name="question-o" />
+            <span>我的帮助</span>
+          </div>
+          <div class="content-item">
+            <van-icon name="balance-o" />
+            <span>我的积分</span>
+          </div>
+          <div class="content-item">
+            <van-icon name="refund-o" />
+            <span>退换/售后</span>
+          </div>
         </div>
       </div>
-    </div>
 
-    <div v-if="isLogin" class="logout-btn">
-     <button @click="logout">退出登录</button>
-    </div>
+      <div v-if="isLogin" class="logout-btn">
+        <button @click="logout">退出登录</button>
+      </div>
+    </van-skeleton>
   </div>
 </template>
 
@@ -106,12 +108,15 @@ export default {
   name: 'UserPage',
   data () {
     return {
-      detail: {}
+      detail: {},
+      loading: true
     }
   },
   created () {
     if (this.isLogin) {
       this.getUserInfoDetail()
+    } else {
+      this.loading = false
     }
   },
   computed: {
@@ -121,9 +126,12 @@ export default {
   },
   methods: {
     async getUserInfoDetail () {
-      const { data: { userInfo } } = await getUserInfoDetail()
-      this.detail = userInfo
-      // console.log(userInfo)
+      try {
+        const { data: { userInfo } } = await getUserInfoDetail()
+        this.detail = userInfo
+      } finally {
+        this.loading = false
+      }
     },
     logout () {
       this.$dialog.confirm({
@@ -139,6 +147,8 @@ export default {
 </script>
 
 <style lang="less" scoped>
+@import '@/styles/variables.less';
+
 .user {
   min-height: 100vh;
   background-color: #f7f7f7;

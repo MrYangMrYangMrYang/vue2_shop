@@ -22,7 +22,7 @@
           <div class="info">
             <span class="tit text-ellipsis-2">{{ item.goods.goods_name }}</span>
             <span class="bottom">
-              <div class="price">¥ <span>{{ item.goods.goods_price_min }}</span></div>
+              <div class="price">¥ <span>{{ formatPrice(item.goods.goods_price_min) }}</span></div>
               <!-- 既希望保留原本的形参，又需要通过调用函数传参 => 可以通过箭头函数多包装一层来实现 -->
               <CountBox @input="(value) => changeCount(value, item.goods_id, item.goods_sku_id)" :value="item.goods_num"></CountBox>
             </span>
@@ -30,19 +30,26 @@
         </div>
       </div>
 
-      <div class="footer-fixed">
+      <!-- 底部结算栏 (使用 Vant 组件) -->
+      <van-submit-bar
+        v-if="!isEdit"
+        :price="selPrice * 100"
+        :button-text="'结算(' + selCount + ')'"
+        :disabled="selCount === 0"
+        @submit="goPay"
+        class="submit-bar"
+      >
+        <van-checkbox @click="toggleAllCheck" :value="isAllChecked">全选</van-checkbox>
+      </van-submit-bar>
+
+      <!-- 编辑状态下的删除栏 -->
+      <div class="footer-fixed" v-else>
         <div @click="toggleAllCheck" class="all-check">
-          <van-checkbox :value="isAllChecked"  icon-size="18"></van-checkbox>
+          <van-checkbox :value="isAllChecked" icon-size="18"></van-checkbox>
           全选
         </div>
-
         <div class="all-total">
-          <div class="price">
-            <span>合计：</span>
-            <span>¥ <i class="totalPrice">{{ selPrice }}</i></span>
-          </div>
-          <div v-if="!isEdit" class="goPay" :class="{ disabled: selCount === 0 }"  @click="goPay">结算({{ selCount }})</div>
-          <div v-else @click="handleDel" class="delete" :class="{ disabled: selCount === 0 }" >删除</div>
+          <div @click="handleDel" class="delete" :class="{ disabled: selCount === 0 }">删除</div>
         </div>
       </div>
     </div>
@@ -61,6 +68,8 @@
 <script>
 import CountBox from '@/components/CountBox.vue'
 import { mapGetters, mapState } from 'vuex'
+import { formatPrice } from '@/utils/format'
+
 export default {
   name: 'CartPage',
   components: {
@@ -85,6 +94,7 @@ export default {
     }
   },
   methods: {
+    formatPrice,
     // 选中取反
     toggleCheck (goodsId) {
       this.$store.commit('cart/toggleCheck', goodsId)
@@ -138,6 +148,8 @@ export default {
 </script>
 
 <style lang="less" scoped>
+@import '@/styles/variables.less';
+
 // 主题 padding
 .cart {
   padding-top: 46px;
@@ -155,7 +167,7 @@ export default {
       i {
         font-style: normal;
         margin: 0 2px;
-        color: #fa2209;
+        color: @price-color;
         font-size: 16px;
       }
     }
@@ -172,15 +184,16 @@ export default {
     display: flex;
     justify-content: space-between;
     background-color: #ffffff;
-    border-radius: 5px;
+    border-radius: @border-radius;
 
     .show img {
       width: 100px;
       height: 100px;
+      object-fit: contain;
     }
     .info {
-      width: 210px;
-      padding: 10px 5px;
+      flex: 1;
+      padding: 0 5px 0 10px;
       font-size: 14px;
       display: flex;
       flex-direction: column;
@@ -189,113 +202,85 @@ export default {
       .bottom {
         display: flex;
         justify-content: space-between;
+        align-items: center;
         .price {
           display: flex;
           align-items: flex-end;
-          color: #fa2209;
+          color: @price-color;
           font-size: 12px;
           span {
             font-size: 16px;
-          }
-        }
-        .count-box {
-          display: flex;
-          width: 110px;
-          .add,
-          .minus {
-            width: 30px;
-            height: 30px;
-            outline: none;
-            border: none;
-          }
-          .inp {
-            width: 40px;
-            height: 30px;
-            outline: none;
-            border: none;
-            background-color: #efefef;
-            text-align: center;
-            margin: 0 5px;
+            font-weight: bold;
           }
         }
       }
     }
   }
-}
 
-.footer-fixed {
-  position: fixed;
-  left: 0;
-  bottom: 50px;
-  height: 50px;
-  width: 100%;
-  border-bottom: 1px solid #ccc;
-  background-color: #fff;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0 10px;
+  .submit-bar {
+    bottom: 50px;
+  }
 
-  .all-check {
+  .footer-fixed {
+    position: fixed;
+    left: 0;
+    bottom: 50px;
+    height: 50px;
+    width: 100%;
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    .van-checkbox {
-      margin-right: 5px;
+    padding: 0 10px;
+    background-color: #fff;
+    border-top: 1px solid #eee;
+    z-index: 999;
+    .all-check {
+      display: flex;
+      align-items: center;
+      .van-checkbox {
+        margin-right: 5px;
+      }
+    }
+    .all-total {
+      display: flex;
+      align-items: center;
+      .delete {
+        width: 110px;
+        height: 40px;
+        line-height: 40px;
+        text-align: center;
+        background-color: @primary-color;
+        color: #fff;
+        border-radius: 20px;
+        font-size: 14px;
+        &.disabled {
+          background-color: #ff9999;
+        }
+      }
     }
   }
 
-  .all-total {
-    display: flex;
-    line-height: 36px;
-    .price {
-      font-size: 14px;
-      margin-right: 10px;
-      .totalPrice {
-        color: #fa2209;
-        font-size: 18px;
-        font-style: normal;
-      }
+  .empty-cart {
+    padding: 80px 30px;
+    text-align: center;
+    img {
+      width: 140px;
+      height: 92px;
+      margin-bottom: 20px;
     }
-
-    .goPay, .delete {
-      min-width: 100px;
-      height: 36px;
-      line-height: 36px;
-      text-align: center;
-      background-color: #fa2f21;
+    .tips {
+      color: #999;
+      margin-bottom: 20px;
+    }
+    .btn {
+      width: 150px;
+      height: 40px;
+      line-height: 40px;
+      margin: 0 auto;
+      background-color: @primary-color;
       color: #fff;
-      border-radius: 18px;
-      &.disabled {
-        background-color: #ff9779;
-      }
+      border-radius: 20px;
     }
-  }
-
-}
-
-.empty-cart {
-  padding: 80px 30px;
-  img {
-    width: 140px;
-    height: 92px;
-    display: block;
-    margin: 0 auto;
-  }
-  .tips {
-    text-align: center;
-    color: #666;
-    margin: 30px;
-  }
-  .btn {
-    width: 110px;
-    height: 32px;
-    line-height: 32px;
-    text-align: center;
-    background-color: #fa2c20;
-    border-radius: 16px;
-    color: #fff;
-    display: block;
-    margin: 0 auto;
   }
 }
 </style>

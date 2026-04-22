@@ -60,29 +60,53 @@ export default {
 </script>
 
 <style lang="less" scoped>
+@import '@/styles/variables.less';
+
 // 主题 padding
 .category {
-  padding-top: 100px;
+  padding-top: 96px; // 46 (navbar) + 50 (search)
   padding-bottom: 50px;
   height: 100vh;
+  background-color: #fff;
+
   .list-box {
     height: 100%;
     display: flex;
     .left {
       width: 85px;
       height: 100%;
-      background-color: #f3f3f3;
-      overflow: auto;
+      background-color: @gray-color;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+
       a {
         display: block;
-        height: 45px;
-        line-height: 45px;
+        height: 50px;
+        line-height: 50px;
         text-align: center;
-        color: #444444;
-        font-size: 12px;
+        color: @text-color;
+        font-size: 13px;
+        transition: @transition-base;
+        position: relative;
+
         &.active {
-          color: #fb442f;
+          color: @primary-color;
           background-color: #fff;
+          font-weight: 500;
+          &::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 3px;
+            height: 16px;
+            background-color: @primary-color;
+          }
+        }
+
+        &:active:not(.active) {
+          background-color: darken(@gray-color, 3%);
         }
       }
     }
@@ -90,25 +114,39 @@ export default {
       flex: 1;
       height: 100%;
       background-color: #ffffff;
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: flex-start;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: @spacing-md;
+      padding: @spacing-lg;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
       align-content: flex-start;
-      padding: 10px 0;
-      overflow: auto;
 
       .cate-goods {
-        width: 33.3%;
-        margin-bottom: 10px;
+        width: 100%;
+        margin-bottom: @spacing-sm;
+        transition: @transition-base;
+
+        &:active {
+          transform: scale(@active-scale);
+          opacity: @active-opacity;
+        }
+
         img {
-          width: 70px;
-          height: 70px;
+          width: 100%;
+          aspect-ratio: 1/1; // 保持比例防止抖动
+          object-fit: contain;
           display: block;
-          margin: 5px auto;
+          margin: 0 auto @spacing-xs;
         }
         p {
           text-align: center;
           font-size: 12px;
+          color: @text-color;
+          line-height: 1.4;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
         }
       }
     }

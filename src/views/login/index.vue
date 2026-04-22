@@ -136,62 +136,86 @@ export default {
 </script>
 
 <style lang="less" scoped>
+@import '@/styles/variables.less';
+
 .container {
-  padding: 49px 29px;
+  padding: 40px @spacing-xl;
 
   .title {
-    margin-bottom: 20px;
+    margin-bottom: 30px;
     h3 {
-      font-size: 26px;
-      font-weight: normal;
+      font-size: 24px;
+      font-weight: 500;
+      color: @text-color;
     }
     p {
-      line-height: 40px;
+      line-height: 1.5;
       font-size: 14px;
-      color: #b8b8b8;
+      color: @text-light-color;
+      margin-top: @spacing-sm;
     }
   }
 
   .form-item {
     border-bottom: 1px solid #f3f1f2;
-    padding: 8px;
-    margin-bottom: 14px;
+    padding: @spacing-md 0;
+    margin-bottom: @spacing-sm;
     display: flex;
     align-items: center;
+    transition: @transition-base;
+
+    &:focus-within {
+      border-bottom-color: @accent-color;
+    }
+
     .inp {
       display: block;
       border: none;
       outline: none;
-      height: 32px;
-      font-size: 14px;
+      height: 44px; // 提升点击热区
+      font-size: 16px; // 移动端输入框字体不小于16px可防止iOS自动缩放
       flex: 1;
+      background: transparent;
     }
     img {
-      width: 94px;
-      height: 31px;
+      width: 100px;
+      height: 40px;
+      object-fit: contain;
+      cursor: pointer;
     }
     button {
-      height: 31px;
+      height: 44px;
       border: none;
-      font-size: 13px;
-      color: #cea26a;
+      font-size: 14px;
+      color: @accent-color;
       background-color: transparent;
-      padding-right: 9px;
+      padding: 0 @spacing-sm;
+      &:active {
+        opacity: @active-opacity;
+      }
     }
   }
 
   .login-btn {
     width: 100%;
-    height: 42px;
-    margin-top: 39px;
-    background: linear-gradient(90deg,#ecb53c,#ff9211);
+    height: 48px;
+    margin-top: 40px;
+    background: linear-gradient(90deg, #ecb53c, #ff9211);
     color: #fff;
-    border-radius: 39px;
-    box-shadow: 0 10px 20px 0 rgba(0,0,0,.1);
+    border-radius: 24px;
+    box-shadow: 0 4px 12px rgba(255, 146, 17, 0.3);
     letter-spacing: 2px;
     display: flex;
     justify-content: center;
     align-items: center;
+    font-size: 16px;
+    font-weight: 500;
+    transition: @transition-base;
+
+    &:active {
+      transform: scale(@active-scale);
+      box-shadow: 0 2px 6px rgba(255, 146, 17, 0.2);
+    }
   }
 }
 </style>

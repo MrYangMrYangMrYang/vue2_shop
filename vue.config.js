@@ -6,19 +6,16 @@
 const { defineConfig } = require('@vue/cli-service')
 
 module.exports = defineConfig({
-  publicPath: './',
+  publicPath: '/',
   // 作用：部署应用包时的基本 URL
-  // './' 的含义：使用相对路径
-  // 打包后的资源引用路径相对于当前 HTML 文件
-  // 例如：<script src="./js/chunk.js"> 而不是 <script src="/js/chunk.js">
+  // '/' 的含义：使用绝对路径
+  // 打包后的资源引用路径相对于项目根目录
+  // 例如：<script src="/js/chunk.js">
 
-  transpileDependencies: true
-  // 作用：控制是否转译 node_modules 中的依赖
-  // true 的含义：
-  // 转译 node_modules 中所有的依赖
-  // 确保所有依赖都被编译成兼容性更好的 ES5 代码
-  // 适用场景：
-  // 项目中使用了未提供 ES5 版本的第三方库
-  // 需要支持较旧的浏览器（如 IE）
-  // 某些依赖使用了现代 JavaScript 语法
+  transpileDependencies: true,
+  // 开发服务器配置
+  devServer: {
+    // 开启 history 模式的 404 回退到 index.html
+    historyApiFallback: true
+  }
 })
