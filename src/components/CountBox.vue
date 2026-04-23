@@ -12,6 +12,10 @@ export default {
     value: {
       type: Number,
       default: 1
+    },
+    max: {
+      type: Number,
+      default: 999
     }
   },
   methods: {
@@ -23,6 +27,10 @@ export default {
       this.$emit('input', this.value - 1)
     },
     handleAdd () {
+      if (this.value >= this.max) {
+        this.$toast(`库存不足，最多购买${this.max}件`)
+        return
+      }
       this.$emit('input', this.value + 1)
     },
     // 用户手动输入的情况
@@ -33,6 +41,13 @@ export default {
       // 输入了不合法的文本 或 输入了负值，回退成原来的 value 值
       if (isNaN(num) || num < 1) {
         e.target.value = this.value
+        return
+      }
+
+      if (num > this.max) {
+        this.$toast(`库存不足，最多购买${this.max}件`)
+        e.target.value = this.max
+        this.$emit('input', this.max)
         return
       }
 

@@ -1,6 +1,6 @@
 // 按需导入vant组件
 import Vue from 'vue'
-import { Tab, Tabs, Checkbox, Dialog, ActionSheet, Icon, Search, Swipe, SwipeItem, Grid, GridItem, Toast, Button, Switch, Rate, Tabbar, TabbarItem, NavBar, Skeleton, Divider, GoodsAction, GoodsActionIcon, GoodsActionButton, SubmitBar } from 'vant'
+import { Tab, Tabs, Checkbox, Dialog, ActionSheet, Icon, Search, Swipe, SwipeItem, Grid, GridItem, Toast, Button, Switch, Rate, Tabbar, TabbarItem, NavBar, Skeleton, Divider, GoodsAction, GoodsActionIcon, GoodsActionButton, SubmitBar, CountDown, Cell, CellGroup, Popup, AddressList, Collapse, CollapseItem, Field, Loading, Tag, Uploader } from 'vant'
 
 Vue.use(Tab)
 Vue.use(Tabs)
@@ -26,3 +26,14 @@ Vue.use(GoodsAction)
 Vue.use(GoodsActionIcon)
 Vue.use(GoodsActionButton)
 Vue.use(SubmitBar)
+Vue.use(CountDown)
+Vue.use(Cell)
+Vue.use(Popup)
+Vue.use(AddressList)
+Vue.use(Collapse)
+Vue.use(CollapseItem)
+Vue.use(Field)
+Vue.use(CellGroup)
+Vue.use(Loading)
+Vue.use(Tag)
+Vue.use(Uploader)

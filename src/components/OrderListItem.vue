@@ -25,14 +25,33 @@
     </div>
     <div class="actions">
       <div v-if="item.order_status === 10">
-        <span v-if="item.pay_status === 10">立刻付款</span>
-        <span v-else-if="item.delivery_status === 10">申请取消</span>
-        <span v-else-if="item.delivery_status === 20 || item.delivery_status === 30">确认收货</span>
+        <span v-if="item.pay_status === 10" class="btn" @click="$router.push(`/pay?mode=buyNow&orderId=${item.order_id}`)">立刻付款</span>
+        <span v-else-if="item.delivery_status === 10" class="btn">申请取消</span>
+        <span v-else-if="item.delivery_status === 20" class="btn" @click="showLogistics(item)">查看物流</span>
+        <span v-else-if="item.delivery_status === 20 || item.delivery_status === 30" class="btn danger">确认收货</span>
       </div>
       <div v-if="item.order_status === 30">
-        <span>评价</span>
+        <span class="btn">评价</span>
+        <span class="btn" @click="$router.push(`/after-sales?orderId=${item.order_id}`)">申请售后</span>
       </div>
     </div>
+
+    <!-- 物流弹窗 -->
+    <van-popup v-model="logisticsVisible" position="bottom" round :style="{ height: '60%' }">
+      <div class="logistics-container">
+        <div class="title">物流详情</div>
+        <div class="info" v-if="item.order_id">
+          <p>快递公司：顺丰速运</p>
+          <p>快递单号：SF1234567890</p>
+        </div>
+        <van-steps direction="vertical" :active="0">
+          <van-step v-for="(step, index) in steps" :key="index">
+            <h3>{{ step.status }}</h3>
+            <p>{{ step.time }}</p>
+          </van-step>
+        </van-steps>
+      </div>
+    </van-popup>
   </div>
 </template>
 
@@ -44,6 +63,22 @@ export default {
       default: () => {
         return {}
       }
+    }
+  },
+  data () {
+    return {
+      logisticsVisible: false,
+      steps: [
+        { status: '已签收, 感谢使用顺丰, 期待再次为您服务', time: '2026-04-23 10:00:00' },
+        { status: '【北京市】快件已到达 北京朝阳营业点', time: '2026-04-23 08:30:00' },
+        { status: '快件已从北京分拨中心发出', time: '2026-04-23 02:00:00' },
+        { status: '商家已发货', time: '2026-04-22 18:00:00' }
+      ]
+    }
+  },
+  methods: {
+    showLogistics (item) {
+      this.logisticsVisible = true
     }
   }
 }
@@ -102,16 +137,38 @@ export default {
   }
   .actions {
     text-align: right;
-    span {
+    .btn {
       display: inline-block;
-      height: 28px;
-      line-height: 28px;
-      color: #383838;
-      border: 0.5px solid #a8a8a8;
-      font-size: 14px;
-      padding: 0 15px;
-      border-radius: 5px;
-      margin: 10px 0;
+      padding: 5px 15px;
+      border: 1px solid #ccc;
+      border-radius: 15px;
+      margin-left: 10px;
+      color: #666;
+      &.danger {
+        border-color: #fa2209;
+        color: #fa2209;
+      }
+    }
+  }
+
+  .logistics-container {
+    padding: 16px;
+    .title {
+      font-size: 16px;
+      font-weight: bold;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .info {
+      padding: 12px;
+      background-color: #f7f8fa;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      p {
+        margin: 5px 0;
+        font-size: 14px;
+        color: #666;
+      }
     }
   }
 }

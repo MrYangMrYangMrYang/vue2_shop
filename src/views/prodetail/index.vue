@@ -94,7 +94,7 @@
         <div class="num-box">
           <span class="label">数量</span>
           <!-- v-model 本质上 :value 和 @input 的简写 -->
-          <CountBox v-model="changeCount"></CountBox>
+          <CountBox v-model="changeCount" :max="detail.stock_total"></CountBox>
         </div>
 
         <!-- 有库存才显示提交按钮 -->

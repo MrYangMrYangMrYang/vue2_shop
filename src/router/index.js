@@ -15,6 +15,10 @@ const Pay = () => import('@/views/pay')
 const Prodetail = () => import('@/views/prodetail')
 const Search = () => import('@/views/search/index')
 const SearchList = () => import('@/views/search/list')
+const Address = () => import('@/views/address')
+const Help = () => import('@/views/help')
+const MyResource = () => import('@/views/myresource')
+const AfterSales = () => import('@/views/aftersales')
 
 Vue.use(VueRouter)
 
@@ -42,7 +46,11 @@ const router = new VueRouter({
     // 动态路由传参，确认将来是哪个商品，路由参数中携带id
     { path: '/prodetail/:id', component: Prodetail },
     { path: '/search', component: Search },
-    { path: '/searchlist', component: SearchList }
+    { path: '/searchlist', component: SearchList },
+    { path: '/address', component: Address },
+    { path: '/help', component: Help },
+    { path: '/my-resource', component: MyResource },
+    { path: '/after-sales', component: AfterSales }
   ]
 })
 
@@ -57,7 +65,7 @@ const router = new VueRouter({
 // (2)next(路径)  进行拦截，拦截到next里面配置的路径
 
 // 首先定义一个数组，专门用户存放所有需要权限访问的页面路径
-const authUrls = ['/pay', '/order']
+const authUrls = ['/pay', '/order', '/address']
 
 router.beforeEach((to, from, next) => {
   // console.log(to, from, next)

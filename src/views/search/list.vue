@@ -17,9 +17,12 @@
 
     <!-- 排序选项按钮 -->
     <div class="sort-btns">
-      <div class="sort-item">综合</div>
-      <div class="sort-item">销量</div>
-      <div class="sort-item">价格 </div>
+      <div class="sort-item" :class="{ active: sortType === 'all' }" @click="toggleSort('all')">综合</div>
+      <div class="sort-item" :class="{ active: sortType === 'sales' }" @click="toggleSort('sales')">销量</div>
+      <div class="sort-item" :class="{ active: sortType === 'price' }" @click="toggleSort('price')">
+        价格
+        <van-icon v-if="sortType === 'price'" :name="sortPrice === 0 ? 'arrow-up' : 'arrow-down'" />
+      </div>
     </div>
 
     <div class="goods-list">
@@ -39,7 +42,9 @@ export default {
   data () {
     return {
       page: 1,
-      prodList: []
+      prodList: [],
+      sortType: 'all', // all, sales, price
+      sortPrice: 0 // 0: 升序, 1: 降序
     }
   },
   computed: {
@@ -49,18 +54,40 @@ export default {
     }
   },
   async created () {
-    const { data: { list } } = await getSearchData({
-      categoryId: this.$route.query.categoryId,
-      goodsName: this.querySearch,
-      page: this.page
-    })
-    // console.log(res)
-    this.prodList = list.data
+    this.getSearchList()
+  },
+  methods: {
+    async getSearchList () {
+      const { data: { list } } = await getSearchData({
+        categoryId: this.$route.query.categoryId,
+        goodsName: this.querySearch,
+        page: this.page,
+        sortType: this.sortType,
+        sortPrice: this.sortPrice
+      })
+      this.prodList = list.data
+    },
+    toggleSort (type) {
+      if (type === 'price') {
+        if (this.sortType === 'price') {
+          // 切换升降序
+          this.sortPrice = this.sortPrice === 0 ? 1 : 0
+        } else {
+          this.sortType = 'price'
+          this.sortPrice = 0 // 默认价格升序
+        }
+      } else {
+        this.sortType = type
+      }
+      this.page = 1 // 重置页码
+      this.getSearchList()
+    }
   }
 }
 </script>
 
 <style lang="less" scoped>
+@import '@/styles/variables.less';
 .search {
   padding-top: 46px;
   ::v-deep .van-icon-arrow-left {
@@ -80,6 +107,15 @@ export default {
       text-align: center;
       flex: 1;
       font-size: 16px;
+      color: #333;
+      &.active {
+        color: @primary-color;
+        font-weight: bold;
+      }
+      .van-icon {
+        font-size: 12px;
+        margin-left: 2px;
+      }
     }
   }
 }

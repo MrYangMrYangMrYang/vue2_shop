@@ -25,7 +25,16 @@
         </div>
       </div>
 
-      <div @click="login" class="login-btn">登录</div>
+      <div @click="login" class="login-btn">
+        <van-loading v-if="loading" size="20px" color="#fff" />
+        <span v-else>登录</span>
+      </div>
+
+      <div class="agreement">
+        <van-checkbox v-model="isAgree" icon-size="16px" checked-color="#ee0a24">
+          我已阅读并同意 <span class="link">《用户协议》</span> 和 <span class="link">《隐私政策》</span>
+        </van-checkbox>
+      </div>
     </div>
   </div>
 </template>
@@ -44,7 +53,9 @@ export default {
       timer: null, // 定时器 id
       mobile: '', // 手机号
       picCode: '', // 用户输入的图形验证码
-      msgCode: '' // 短信验证码
+      msgCode: '', // 短信验证码
+      isAgree: false, // 是否同意协议
+      loading: false // 登录状态
     }
   },
   async created () {
@@ -103,6 +114,8 @@ export default {
 
     // 登录
     async login () {
+      if (this.loading) return
+
       // 校验
       if (!this.validFn()) {
         return
@@ -112,20 +125,24 @@ export default {
         return
       }
 
-      // 发送请求
-      console.log('发送请求成功')
-      const res = await codeLogin(this.mobile, this.msgCode)
-      console.log(res)
-      // 将token信息存入vuex中
-      this.$store.commit('user/setUserInfo', res.data)
-      this.$toast('登录成功')
-      // this.$router.push('/')
+      if (!this.isAgree) {
+        this.$toast('请先阅读并同意用户协议')
+        return
+      }
 
-      // 进行判断，看地址栏有无回跳地址
-      // 1. 如果有   => 说明是其他页面，拦截到登录来的，需要回跳
-      // 2. 如果没有 => 正常去首页
-      const url = this.$route.query.backUrl || '/'
-      this.$router.replace(url)
+      // 发送请求
+      this.loading = true
+      try {
+        const res = await codeLogin(this.mobile, this.msgCode)
+        // 将token信息存入vuex中
+        this.$store.commit('user/setUserInfo', res.data)
+        this.$toast('登录成功')
+        // 进行判断，看地址栏有无回跳地址
+        const url = this.$route.query.backUrl || '/'
+        this.$router.replace(url)
+      } catch (error) {
+        this.loading = false
+      }
     }
   },
   // 离开页面清除定时器
@@ -199,22 +216,34 @@ export default {
   .login-btn {
     width: 100%;
     height: 48px;
-    margin-top: 40px;
-    background: linear-gradient(90deg, #ecb53c, #ff9211);
+    background: linear-gradient(90deg, #f9211c, #ff6335);
     color: #fff;
     border-radius: 24px;
-    box-shadow: 0 4px 12px rgba(255, 146, 17, 0.3);
-    letter-spacing: 2px;
     display: flex;
     justify-content: center;
     align-items: center;
     font-size: 16px;
-    font-weight: 500;
+    margin-top: 40px;
+    box-shadow: 0 4px 12px rgba(249, 33, 28, 0.2);
+    cursor: pointer;
     transition: @transition-base;
 
     &:active {
-      transform: scale(@active-scale);
-      box-shadow: 0 2px 6px rgba(255, 146, 17, 0.2);
+      transform: scale(0.98);
+      opacity: @active-opacity;
+    }
+  }
+
+  .agreement {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+    .van-checkbox {
+      font-size: 12px;
+      color: @text-light-color;
+      .link {
+        color: @accent-color;
+      }
     }
   }
 }
