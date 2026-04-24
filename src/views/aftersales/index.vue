@@ -76,7 +76,7 @@ export default {
   name: 'AfterSales',
   data () {
     return {
-      type: '1',
+      type: this.$route.query.type || '1',
       reason: '',
       remark: '',
       showReason: false,

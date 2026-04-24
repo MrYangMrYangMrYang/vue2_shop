@@ -16,9 +16,12 @@ const Prodetail = () => import('@/views/prodetail')
 const Search = () => import('@/views/search/index')
 const SearchList = () => import('@/views/search/list')
 const Address = () => import('@/views/address')
+const AddressEdit = () => import('@/views/address/edit')
 const Help = () => import('@/views/help')
 const MyResource = () => import('@/views/myresource')
 const AfterSales = () => import('@/views/aftersales')
+const Settings = () => import('@/views/settings')
+const Profile = () => import('@/views/settings/profile')
 
 Vue.use(VueRouter)
 
@@ -48,9 +51,12 @@ const router = new VueRouter({
     { path: '/search', component: Search },
     { path: '/searchlist', component: SearchList },
     { path: '/address', component: Address },
+    { path: '/address-edit', component: AddressEdit },
     { path: '/help', component: Help },
     { path: '/my-resource', component: MyResource },
-    { path: '/after-sales', component: AfterSales }
+    { path: '/after-sales', component: AfterSales },
+    { path: '/settings', component: Settings },
+    { path: '/profile', component: Profile }
   ]
 })
 
@@ -65,7 +71,7 @@ const router = new VueRouter({
 // (2)next(路径)  进行拦截，拦截到next里面配置的路径
 
 // 首先定义一个数组，专门用户存放所有需要权限访问的页面路径
-const authUrls = ['/pay', '/order', '/address']
+const authUrls = ['/pay', '/order', '/address', '/address-edit', '/settings', '/profile']
 
 router.beforeEach((to, from, next) => {
   // console.log(to, from, next)

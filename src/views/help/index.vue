@@ -14,7 +14,7 @@
             通常情况下，订单会在支付成功后的24-48小时内发货。
           </van-collapse-item>
           <van-collapse-item title="支持哪些支付方式？" name="3">
-            目前支持余额支付、微信支付、支付宝支付。
+            目前支持微信支付、支付宝支付。
           </van-collapse-item>
           <van-collapse-item title="如何修改收货地址？" name="4">
             在订单发货前，您可以联系客服修改地址；若已发货，则无法直接修改。

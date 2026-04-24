@@ -11,19 +11,15 @@
       @click="$router.push('/search')"
     >
       <template #action>
-        <van-icon class="tool" name="apps-o" />
+        <div @click="$router.push('/search')">搜索</div>
       </template>
     </van-search>
 
-    <!-- 排序选项按钮 -->
-    <div class="sort-btns">
-      <div class="sort-item" :class="{ active: sortType === 'all' }" @click="toggleSort('all')">综合</div>
-      <div class="sort-item" :class="{ active: sortType === 'sales' }" @click="toggleSort('sales')">销量</div>
-      <div class="sort-item" :class="{ active: sortType === 'price' }" @click="toggleSort('price')">
-        价格
-        <van-icon v-if="sortType === 'price'" :name="sortPrice === 0 ? 'arrow-up' : 'arrow-down'" />
-      </div>
-    </div>
+    <!-- 排序选项 -->
+    <van-dropdown-menu class="sort-dropdown" active-color="#fa2209">
+      <van-dropdown-item v-model="sortType" :options="sortOptions" @change="onSortTypeChange" />
+      <van-dropdown-item v-model="sortPrice" :options="priceOptions" @change="onSortPriceChange" />
+    </van-dropdown-menu>
 
     <div class="goods-list">
       <GoodsItem v-for="item in prodList" :key="item.goods_id" :item="item"></GoodsItem>
@@ -44,7 +40,16 @@ export default {
       page: 1,
       prodList: [],
       sortType: 'all', // all, sales, price
-      sortPrice: 0 // 0: 升序, 1: 降序
+      sortPrice: 0, // 0: 升序, 1: 降序
+      sortOptions: [
+        { text: '综合排序', value: 'all' },
+        { text: '销量排序', value: 'sales' },
+        { text: '价格排序', value: 'price' }
+      ],
+      priceOptions: [
+        { text: '升序排列', value: 0 },
+        { text: '降序排列', value: 1 }
+      ]
     }
   },
   computed: {
@@ -58,28 +63,31 @@ export default {
   },
   methods: {
     async getSearchList () {
-      const { data: { list } } = await getSearchData({
-        categoryId: this.$route.query.categoryId,
-        goodsName: this.querySearch,
-        page: this.page,
-        sortType: this.sortType,
-        sortPrice: this.sortPrice
-      })
-      this.prodList = list.data
-    },
-    toggleSort (type) {
-      if (type === 'price') {
-        if (this.sortType === 'price') {
-          // 切换升降序
-          this.sortPrice = this.sortPrice === 0 ? 1 : 0
-        } else {
-          this.sortType = 'price'
-          this.sortPrice = 0 // 默认价格升序
-        }
-      } else {
-        this.sortType = type
+      try {
+        const { data: { list } } = await getSearchData({
+          categoryId: this.$route.query.categoryId,
+          goodsName: this.querySearch,
+          page: this.page,
+          sortType: this.sortType,
+          sortPrice: this.sortPrice
+        })
+        this.prodList = list.data
+      } catch (e) {
+        // console.log(e)
       }
-      this.page = 1 // 重置页码
+    },
+    onSortTypeChange () {
+      // 切换类型时，根据类型设置默认的升降序
+      if (this.sortType === 'sales') {
+        this.sortPrice = 1 // 销量默认降序
+      } else if (this.sortType === 'price') {
+        this.sortPrice = 0 // 价格默认升序
+      }
+      this.page = 1
+      this.getSearchList()
+    },
+    onSortPriceChange () {
+      this.page = 1
       this.getSearchList()
     }
   }
@@ -93,30 +101,11 @@ export default {
   ::v-deep .van-icon-arrow-left {
     color: #333;
   }
-  .tool {
-    font-size: 24px;
-    height: 40px;
-    line-height: 40px;
-  }
 
-  .sort-btns {
-    display: flex;
-    height: 36px;
-    line-height: 36px;
-    .sort-item {
-      text-align: center;
-      flex: 1;
-      font-size: 16px;
-      color: #333;
-      &.active {
-        color: @primary-color;
-        font-weight: bold;
-      }
-      .van-icon {
-        font-size: 12px;
-        margin-left: 2px;
-      }
-    }
+  .sort-dropdown {
+    position: sticky;
+    top: 46px;
+    z-index: 999;
   }
 }
 

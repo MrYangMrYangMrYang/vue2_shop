@@ -4,8 +4,8 @@
 
     <van-skeleton title avatar :row="10" :loading="loading">
       <van-swipe :autoplay="3000" @change="onChange">
-        <van-swipe-item v-for="image in images" :key="image.file_id">
-          <img :src="image.external_url" />
+        <van-swipe-item v-for="(image, index) in images" :key="image.file_id">
+          <img :src="image.external_url" @click="previewImage(index)" />
         </van-swipe-item>
 
         <template #indicator>
@@ -68,7 +68,7 @@
     <!-- 底部操作栏 (使用 Vant 组件) -->
     <van-goods-action>
       <van-goods-action-icon icon="wap-home-o" text="首页" @click="$router.push('/')" />
-      <van-goods-action-icon icon="shopping-cart-o" text="购物车" :badge="cartTotal > 0 ? cartTotal : ''" @click="$router.push('/cart')" />
+      <van-goods-action-icon icon="shopping-cart-o" text="购物车" :badge="cartTotal > 0 ? cartTotal : ''" @click="$router.push('/cart?from=prodetail')" />
       <van-goods-action-button type="warning" text="加入购物车" @click="add" />
       <van-goods-action-button type="danger" text="立即购买" @click="buy" />
     </van-goods-action>
@@ -99,8 +99,8 @@
 
         <!-- 有库存才显示提交按钮 -->
         <div class="showbtn" v-if="detail.stock_total > 0">
-          <div class="btn" v-if="mode === 'cart'" @click="addCart">加入购物车</div>
-          <div class="btn now" v-else @click="goBuyNow">立刻购买</div>
+          <div class="btn" v-if="mode === 'cart'" @click="onAddCart">加入购物车</div>
+          <div class="btn now" v-else @click="onBuyNow">立即购买</div>
         </div>
         <div class="btn-none" v-else>该商品已抢完</div>
       </div>
@@ -109,6 +109,8 @@
 </template>
 
 <script>
+import { ImagePreview } from 'vant'
+import { mapGetters } from 'vuex'
 import { addCart } from '@/api/cart'
 import { getProDetail, getProComments } from '@/api/prodetail'
 import defaultImg from '@/assets/default-avatar.png'
@@ -133,17 +135,20 @@ export default {
       showPannel: false, // 控制弹层的显示隐藏
       mode: 'cart', // 标记弹层状态
       changeCount: 1, // 数字框绑定的数据(默认是1)
-      cartTotal: 0, // 购物车商品总数(购物车角标数字)
       loading: true // 加载状态
     }
   },
   computed: {
+    ...mapGetters('cart', ['cartTotal']),
     goodsId () {
       return this.$route.params.id
     }
   },
   created () {
     this.initData()
+    if (this.$store.getters.token) {
+      this.$store.dispatch('cart/getCartAction')
+    }
   },
   methods: {
     formatPrice,
@@ -156,6 +161,12 @@ export default {
     },
     onChange (index) {
       this.current = index
+    },
+    previewImage (index) {
+      ImagePreview({
+        images: this.images.map(item => item.external_url),
+        startPosition: index
+      })
     },
     async getDetail () {
       const { data: { detail } } = await getProDetail(this.goodsId)
@@ -176,17 +187,31 @@ export default {
       this.mode = 'buy'
       this.showPannel = true
     },
-    async addCart () {
+    async onAddCart () {
       if (this.loginConfirm()) {
         return
       }
-      const { data } = await addCart(this.goodsId, this.changeCount, this.detail.skuList[0].goods_sku_id)
-      // console.log(data)
-      this.cartTotal = data.cartTotal
-      this.$toast('加入购物车成功')
-      this.showPannel = false
+      this.$toast.loading({
+        message: '正在加入购物车...',
+        forbidClick: true,
+        loadingType: 'spinner',
+        duration: 0
+      })
+      try {
+        await addCart(this.goodsId, this.changeCount, this.detail.skuList[0].goods_sku_id)
+        await this.$store.dispatch('cart/getCartAction') // 重新获取购物车数据同步 Vuex
+        this.$toast.success('加入购物车成功')
+        this.showPannel = false
+
+        // 1.5秒后跳转到购物车页面，确保用户能看清成功提示
+        setTimeout(() => {
+          this.$router.push('/cart?from=prodetail')
+        }, 1500)
+      } catch (e) {
+        this.$toast.fail('加入购物车失败')
+      }
     },
-    goBuyNow () {
+    onBuyNow () {
       if (this.loginConfirm()) {
         return
       }
@@ -211,6 +236,11 @@ export default {
   padding-bottom: 50px;
   background-color: @gray-color;
   min-height: 100vh;
+  overflow-x: hidden; // 防止水平溢出导致底部栏错位
+}
+
+.van-goods-action {
+  z-index: 1000; // 确保底部栏在最上层
 }
 
 .van-nav-bar {
@@ -363,9 +393,20 @@ export default {
 .desc {
   background-color: #fff;
   padding: @spacing-lg;
-  ::v-deep img {
-    display: block;
-    width: 100%;
+  overflow: hidden; // 确保描述内容不溢出
+  ::v-deep {
+    img {
+      display: block;
+      width: 100% !important;
+      height: auto !important;
+    }
+    table {
+      width: 100% !important;
+    }
+    p, div, span {
+      max-width: 100% !important;
+      word-break: break-all; // 强制换行防止撑开容器
+    }
   }
 }
 

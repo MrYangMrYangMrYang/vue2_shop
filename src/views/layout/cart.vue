@@ -1,6 +1,11 @@
 <template>
   <div class="cart">
-    <van-nav-bar title="购物车" fixed />
+    <van-nav-bar
+      title="购物车"
+      fixed
+      :left-arrow="$route.query.from === 'prodetail'"
+      @click-left="$router.go(-1)"
+    />
 
     <!-- 已登录且有商品 -->
     <div v-if="isLogin && cartList.length > 0" class="cart-content">
@@ -12,8 +17,7 @@
           <span class="label">件商品</span>
         </div>
         <div class="edit-btn" @click="isEdit = !isEdit">
-          <van-icon :name="isEdit ? 'success' : 'edit'" size="18" />
-          <span>{{ isEdit ? '完成' : '编辑' }}</span>
+          <span>{{ isEdit ? '完成' : '管理' }}</span>
         </div>
       </div>
 

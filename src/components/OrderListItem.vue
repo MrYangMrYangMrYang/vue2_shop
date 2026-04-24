@@ -3,37 +3,44 @@
     <div class="tit">
       <div class="time">{{ item.create_time }}</div>
       <div class="status">
-        <span>{{ item.state_text }}</span>
+        <van-tag plain :type="statusTagType">
+          {{ item.refund_status > 0 ? '售后中' : item.state_text }}
+        </van-tag>
       </div>
     </div>
-    <div class="list" >
+    <div class="list">
       <div class="list-item" v-for="(goods, index) in item.goods" :key="index">
         <div class="goods-img">
           <img :src="goods.goods_image" alt="">
         </div>
-        <div class="goods-content text-ellipsis-2">
-          {{ goods.goods_name }}
+        <div class="goods-content">
+          <div class="name text-ellipsis-2">{{ goods.goods_name }}</div>
+          <div class="attr" v-if="goods.goods_sku">{{ goods.goods_sku.goods_attr }}</div>
         </div>
         <div class="goods-trade">
-          <p>¥ {{ goods.total_pay_price }}</p>
-          <p>x {{ goods.total_num }}</p>
+          <p class="price">¥ {{ goods.total_pay_price }}</p>
+          <p class="count">x {{ goods.total_num }}</p>
         </div>
       </div>
     </div>
     <div class="total">
-      共 {{ item.total_num }} 件商品，总金额 ¥{{ item.total_price }}
+      共 <span>{{ item.total_num }}</span> 件商品，总金额 <span class="price">¥{{ item.total_price }}</span>
     </div>
-    <div class="actions">
-      <div v-if="item.order_status === 10">
-        <span v-if="item.pay_status === 10" class="btn" @click="$router.push(`/pay?mode=buyNow&orderId=${item.order_id}`)">立刻付款</span>
-        <span v-else-if="item.delivery_status === 10" class="btn">申请取消</span>
-        <span v-else-if="item.delivery_status === 20" class="btn" @click="showLogistics(item)">查看物流</span>
-        <span v-else-if="item.delivery_status === 20 || item.delivery_status === 30" class="btn danger">确认收货</span>
-      </div>
-      <div v-if="item.order_status === 30">
-        <span class="btn">评价</span>
-        <span class="btn" @click="$router.push(`/after-sales?orderId=${item.order_id}`)">申请售后</span>
-      </div>
+    <div class="actions" v-if="!item.refund_status || item.refund_status === 0">
+      <template v-if="item.order_status === 10">
+        <van-button v-if="item.pay_status === 10" size="small" round plain @click="$emit('cancel', item.order_id)">取消订单</van-button>
+        <van-button v-if="item.pay_status === 10" size="small" round color="#fa2209" @click="$router.push(`/pay?mode=buyNow&orderId=${item.order_id}`)">立刻付款</van-button>
+        <van-button v-else-if="item.delivery_status === 10" size="small" round plain @click="$router.push(`/after-sales?orderId=${item.order_id}&type=2`)">申请退款</van-button>
+        <template v-else-if="item.delivery_status === 20">
+          <van-button size="small" round plain @click="showLogistics(item)">查看物流</van-button>
+          <van-button size="small" round color="#fa2209">确认收货</van-button>
+        </template>
+        <van-button v-else-if="item.delivery_status === 30" size="small" round color="#fa2209">确认收货</van-button>
+      </template>
+      <template v-if="item.order_status === 30">
+        <van-button size="small" round plain>评价</van-button>
+        <van-button size="small" round plain @click="$router.push(`/after-sales?orderId=${item.order_id}`)">申请售后</van-button>
+      </template>
     </div>
 
     <!-- 物流弹窗 -->
@@ -65,6 +72,17 @@ export default {
       }
     }
   },
+  computed: {
+    statusTagType () {
+      // 状态：10-进行中，20-已取消，30-已完成
+      switch (this.item.order_status) {
+        case 10: return 'danger'
+        case 30: return 'success'
+        case 20: return 'default'
+        default: return 'primary'
+      }
+    }
+  },
   data () {
     return {
       logisticsVisible: false,
@@ -85,89 +103,125 @@ export default {
 </script>
 
 <style lang="less" scoped>
+@import "@/styles/variables.less";
+
 .order-list-item {
-  margin: 10px auto;
+  margin: @spacing-md auto;
   width: 94%;
-  padding: 15px;
+  padding: @spacing-lg;
   background-color: #ffffff;
-  box-shadow: 0 0.5px 2px 0 rgba(0,0,0,.05);
-  border-radius: 8px;
-  color: #333;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+  border-radius: @border-radius;
+  color: @text-color;
   font-size: 13px;
 
   .tit {
-    height: 24px;
-    line-height: 24px;
     display: flex;
     justify-content: space-between;
-    margin-bottom: 20px;
-    .status {
-      color: #fa2209;
+    align-items: center;
+    margin-bottom: @spacing-lg;
+    .time {
+      color: @text-light-color;
+      font-size: 12px;
     }
+  }
+
+  .list {
+    margin-bottom: @spacing-lg;
   }
 
   .list-item {
     display: flex;
+    margin-bottom: @spacing-md;
+    &:last-child {
+      margin-bottom: 0;
+    }
     .goods-img {
-      width: 90px;
-      height: 90px;
-      margin: 0px 10px 10px 0;
+      width: 80px;
+      height: 80px;
+      margin-right: @spacing-md;
+      border-radius: 4px;
+      overflow: hidden;
+      background-color: @gray-color;
       img {
         width: 100%;
         height: 100%;
+        object-fit: cover;
       }
     }
     .goods-content {
-      flex: 2;
-      line-height: 18px;
-      max-height: 36px;
-      margin-top: 8px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 2px 0;
+      .name {
+        line-height: 1.4;
+        font-weight: 500;
+      }
+      .attr {
+        font-size: 11px;
+        color: @text-light-color;
+        margin-top: 4px;
+      }
     }
     .goods-trade {
-      flex: 1;
-      line-height: 18px;
+      margin-left: @spacing-md;
       text-align: right;
-      color: #b39999;
-      margin-top: 8px;
+      .price {
+        color: @text-color;
+        font-weight: bold;
+        margin-bottom: 4px;
+      }
+      .count {
+        color: @text-light-color;
+        font-size: 12px;
+      }
     }
   }
 
   .total {
     text-align: right;
+    padding: @spacing-md 0;
+    border-top: 1px solid #f2f3f5;
+    color: @text-color;
+    font-size: 13px;
+    span {
+      font-weight: bold;
+    }
+    .price {
+      color: @price-color;
+      font-size: 16px;
+      margin-left: 2px;
+    }
   }
+
   .actions {
     text-align: right;
-    .btn {
-      display: inline-block;
-      padding: 5px 15px;
-      border: 1px solid #ccc;
-      border-radius: 15px;
-      margin-left: 10px;
-      color: #666;
-      &.danger {
-        border-color: #fa2209;
-        color: #fa2209;
-      }
+    margin-top: @spacing-sm;
+    .van-button {
+      margin-left: @spacing-sm;
+      min-width: 80px;
     }
   }
 
   .logistics-container {
-    padding: 16px;
+    padding: @spacing-lg;
     .title {
       font-size: 16px;
       font-weight: bold;
       text-align: center;
-      margin-bottom: 20px;
+      margin-bottom: @spacing-xl;
     }
     .info {
-      padding: 12px;
-      background-color: #f7f8fa;
-      border-radius: 8px;
-      margin-bottom: 20px;
+      padding: @spacing-md;
+      background-color: @gray-color;
+      border-radius: @border-radius;
+      margin-bottom: @spacing-xl;
       p {
-        margin: 5px 0;
+        margin: @spacing-xs 0;
         font-size: 14px;
-        color: #666;
+        color: @text-color;
       }
     }
   }

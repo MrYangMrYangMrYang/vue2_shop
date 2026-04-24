@@ -14,7 +14,7 @@
           </div>
           <div class="user-info" @click="isLogin ? null : $router.push('/login')">
             <div class="name">
-              <span>{{ isLogin ? (detail.nickName || detail.mobile) : '点击登录' }}</span>
+              <span>{{ isLogin ? (detail.nickName || '默认昵称') : '点击登录' }}</span>
               <van-tag v-if="isLogin" type="warning" size="medium" round>普通会员</van-tag>
             </div>
             <div class="mobile" v-if="isLogin">{{ detail.mobile }}</div>
@@ -29,44 +29,20 @@
       <!-- 资产卡片 -->
       <div class="asset-card">
         <div class="asset-items">
-          <div class="asset-item" @click="$router.push('/my-resource?type=balance')">
-            <span class="value">¥{{ formatPrice(detail.pay_money || 0) }}</span>
-            <span class="label">账户余额</span>
-          </div>
           <div class="asset-item" @click="$router.push('/my-resource?type=points')">
             <span class="value">{{ formatNumber(detail.points || 0) }}</span>
             <span class="label">我的积分</span>
           </div>
           <div class="asset-item" @click="$router.push('/my-resource?type=coupon')">
-            <span class="value">{{ detail.coupon_count || 0 }}</span>
+            <span class="value">{{ detail.coupon_count || 2 }}</span>
             <span class="label">优惠券</span>
           </div>
-        </div>
-        <div class="asset-action" @click="$router.push('/wallet')">
-          <van-icon name="balance-pay" size="20" />
-          <span>我的钱包</span>
-          <van-icon name="arrow" size="14" color="#999" />
-        </div>
-      </div>
-
-      <!-- 收藏与足迹 -->
-      <div class="stats-card">
-        <div class="stats-item" @click="$router.push('/my-resource?type=favorite')">
-          <div class="stats-icon favorite">
-            <van-icon name="star-o" size="20" />
-          </div>
-          <div class="stats-info">
-            <span class="value">{{ detail.favorite_count || 0 }}</span>
+          <div class="asset-item" @click="$router.push('/my-resource?type=favorite')">
+            <span class="value">{{ detail.favorite_count || 2 }}</span>
             <span class="label">我的收藏</span>
           </div>
-        </div>
-        <div class="stats-divider"></div>
-        <div class="stats-item" @click="$router.push('/my-resource?type=footprint')">
-          <div class="stats-icon footprint">
-            <van-icon name="eye-o" size="20" />
-          </div>
-          <div class="stats-info">
-            <span class="value">{{ detail.footprint_count || 0 }}</span>
+          <div class="asset-item" @click="$router.push('/my-resource?type=footprint')">
+            <span class="value">{{ detail.footprint_count || 2 }}</span>
             <span class="label">历史足迹</span>
           </div>
         </div>
@@ -103,67 +79,61 @@
             </div>
             <span class="label">待收货</span>
           </div>
-          <div class="order-item" @click="$router.push('/order/after-sale')">
+          <div class="order-item" @click="$router.push('/order?dataType=comment')">
+            <div class="icon-wrapper evaluation">
+              <van-icon name="chat-o" size="24" />
+              <span v-if="detail.pending_comment_count" class="badge">{{ detail.pending_comment_count }}</span>
+            </div>
+            <span class="label">待评价</span>
+          </div>
+          <div class="order-item" @click="$router.push('/order?dataType=refund')">
             <div class="icon-wrapper service">
               <van-icon name="after-sale" size="24" />
             </div>
-            <span class="label">售后/退款</span>
+            <span class="label">售后</span>
           </div>
         </div>
       </div>
 
-      <!-- 我的服务 -->
-      <div class="section-card">
-        <div class="section-header">
-          <span class="title">我的服务</span>
+      <!-- 福利与服务行 -->
+      <div class="section-row">
+        <!-- 我的福利 -->
+        <div class="section-card">
+          <div class="section-header">
+            <span class="title">我的福利</span>
+          </div>
+          <div class="service-grid">
+            <div class="service-item" @click="$router.push('/my-resource?type=get-coupon')">
+              <div class="icon-bg coupon">
+                <van-icon name="coupon-o" size="22" />
+              </div>
+              <span class="label">领券中心</span>
+            </div>
+          </div>
         </div>
-        <div class="service-grid">
-          <div class="service-item" @click="$router.push('/address')">
-            <div class="icon-bg address">
-              <van-icon name="location-o" size="22" />
-            </div>
-            <span class="label">收货地址</span>
+
+        <!-- 我的服务 -->
+        <div class="section-card">
+          <div class="section-header">
+            <span class="title">我的服务</span>
           </div>
-          <div class="service-item" @click="$router.push('/help')">
-            <div class="icon-bg help">
-              <van-icon name="service-o" size="22" />
+          <div class="service-grid">
+            <div class="service-item" @click="$router.push('/help')">
+              <div class="icon-bg help">
+                <van-icon name="service-o" size="22" />
+              </div>
+              <span class="label">客服服务</span>
             </div>
-            <span class="label">帮助客服</span>
-          </div>
-          <div class="service-item" @click="$router.push('/coupon')">
-            <div class="icon-bg coupon">
-              <van-icon name="coupon-o" size="22" />
-            </div>
-            <span class="label">领券中心</span>
-          </div>
-          <div class="service-item" @click="$router.push('/about')">
-            <div class="icon-bg about">
-              <van-icon name="info-o" size="22" />
-            </div>
-            <span class="label">关于我们</span>
           </div>
         </div>
       </div>
 
-      <!-- 退出登录 -->
-      <div v-if="isLogin" class="logout-section">
-        <van-button
-          plain
-          round
-          size="large"
-          @click="logout"
-          class="logout-btn"
-        >
-          退出登录
-        </van-button>
-      </div>
     </van-skeleton>
   </div>
 </template>
 
 <script>
 import { getUserInfoDetail } from '@/api/user.js'
-import { formatPrice } from '@/utils/format'
 
 export default {
   name: 'UserPage',
@@ -187,7 +157,6 @@ export default {
     }
   },
   methods: {
-    formatPrice,
     formatNumber (num) {
       if (num >= 10000) {
         return (num / 10000).toFixed(1) + 'w'
@@ -203,17 +172,6 @@ export default {
       } finally {
         this.loading = false
       }
-    },
-    logout () {
-      this.$dialog.confirm({
-        title: '温馨提示',
-        message: '确定要退出登录吗？',
-        confirmButtonText: '退出',
-        confirmButtonColor: '#ee0a24'
-      }).then(() => {
-        this.$store.dispatch('user/logout')
-        this.$toast.success('已退出登录')
-      }).catch(() => {})
     }
   }
 }
@@ -334,8 +292,7 @@ export default {
 
   .asset-items {
     display: flex;
-    padding-bottom: 16px;
-    border-bottom: 1px solid #f0f0f0;
+    padding: 4px 0;
 
     .asset-item {
       flex: 1;
@@ -359,86 +316,6 @@ export default {
         color: #999;
       }
     }
-  }
-
-  .asset-action {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    padding-top: 16px;
-    color: #333;
-    font-size: 14px;
-    cursor: pointer;
-
-    &:active {
-      opacity: 0.7;
-    }
-  }
-}
-
-// 收藏与足迹
-.stats-card {
-  background-color: #fff;
-  border-radius: 16px;
-  margin: 0 16px 12px;
-  padding: 16px;
-  display: flex;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
-
-  .stats-item {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    cursor: pointer;
-
-    &:active {
-      opacity: 0.7;
-    }
-
-    .stats-icon {
-      width: 44px;
-      height: 44px;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-
-      &.favorite {
-        background: linear-gradient(135deg, #fff3e0, #ffe0b2);
-        color: #ff9800;
-      }
-
-      &.footprint {
-        background: linear-gradient(135deg, #e3f2fd, #bbdefb);
-        color: #2196f3;
-      }
-    }
-
-    .stats-info {
-      display: flex;
-      flex-direction: column;
-
-      .value {
-        font-size: 18px;
-        font-weight: 700;
-        color: #333;
-      }
-
-      .label {
-        font-size: 12px;
-        color: #999;
-      }
-    }
-  }
-
-  .stats-divider {
-    width: 1px;
-    height: 40px;
-    background-color: #f0f0f0;
-    margin: 0 8px;
   }
 }
 
@@ -473,6 +350,28 @@ export default {
   }
 }
 
+// 左右分栏布局
+.section-row {
+  display: flex;
+  margin: 0 16px 12px;
+  gap: 12px;
+
+  .section-card {
+     flex: 1;
+     margin: 0; // 覆盖外部 margin
+
+     .service-grid {
+       grid-template-columns: 1fr; // 一行只显示一个
+       gap: 0;
+
+       .service-item {
+         align-items: flex-start; // 左对齐
+         padding-left: 4px; // 稍微给点内边距，避免紧贴边缘
+       }
+     }
+   }
+}
+
 // 订单网格
 .order-grid {
   display: flex;
@@ -501,6 +400,7 @@ export default {
       &.payment { background-color: #fff3e0; color: #ff9800; }
       &.delivery { background-color: #e8f5e9; color: #4caf50; }
       &.received { background-color: #e3f2fd; color: #2196f3; }
+      &.evaluation { background-color: #f3e5f5; color: #9c27b0; }
       &.service { background-color: #fce4ec; color: #e91e63; }
 
       .badge {
@@ -560,24 +460,6 @@ export default {
     .label {
       font-size: 12px;
       color: #666;
-    }
-  }
-}
-
-// 退出登录
-.logout-section {
-  padding: 8px 16px 20px; // 上边距减小，让按钮往上移动
-
-  .logout-btn {
-    background-color: #fff;
-    color: #999;
-    border: 1px solid #e5e5e5;
-    font-size: 15px;
-    height: 44px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
-
-    &:active {
-      background-color: #f5f5f5;
     }
   }
 }
