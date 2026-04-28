@@ -8,6 +8,16 @@
       </template>
     </van-search>
 
+    <!-- 搜索发现 -->
+    <div class="search-discover">
+      <div class="title">搜索发现</div>
+      <div class="list">
+        <div v-for="item in hotKeywords" :key="item" @click="goSearch(item)" class="list-item">
+          {{ item }}
+        </div>
+      </div>
+    </div>
+
     <!-- 搜索历史 -->
     <div class="search-history" v-if="historyData.length > 0">
       <div class="title">
@@ -15,8 +25,9 @@
         <van-icon @click="clear" name="delete-o" size="16" />
       </div>
       <div class="list">
-        <div v-for="item in historyData" :key="item" @click="goSearch(item)" class="list-item">
-          {{ item }}
+        <div v-for="item in historyData" :key="item" class="list-item">
+          <span @click="goSearch(item)">{{ item }}</span>
+          <van-icon name="cross" size="12" @click.stop="removeHistory(item)" />
         </div>
       </div>
     </div>
@@ -24,40 +35,85 @@
 </template>
 
 <script>
-// 导入存储模块
+/**
+ * SearchPage - 商品搜索入口页面组件
+ * 核心功能：
+ * 1. 搜索关键词录入：支持通过输入框手动录入关键词
+ * 2. 搜索发现：展示后端配置或预设的热门搜索词
+ * 3. 历史记录管理：
+ *    - 基于本地存储 (LocalStorage) 持久化搜索历史
+ *    - 自动去重与排序 (新搜索项置顶)
+ *    - 限制存储条数 (最多 10 条)
+ *    - 支持单条删除与一键清空历史
+ * 4. 路由跳转：携带关键词跳转至商品列表结果页
+ */
 import { getHistoryList, setHistoryList } from '@/utils/storage'
+
 export default {
   name: 'SearchPage',
   data () {
     return {
-      search: '', // 搜索框的内容
-      historyData: getHistoryList() // 历史记录
+      search: '', // 当前搜索框输入的关键词
+      historyData: getHistoryList(), // 从本地存储初始化的搜索历史列表
+      hotKeywords: ['手机', '电脑', '耳机', '衣服', '鞋子', '零食', '水杯', '充电宝'] // 模拟的热门搜索词列表
     }
   },
   methods: {
+    /**
+     * 执行搜索逻辑
+     * 1. 校验关键词合法性
+     * 2. 更新本地历史记录 (去重、置顶、限额)
+     * 3. 持久化存储
+     * 4. 携带参数跳转
+     * @param {String} key 搜索关键词
+     */
     goSearch (key) {
-      // console.log('进行了搜索，搜索历史要更新', key)
+      if (!key.trim()) return
+
       const index = this.historyData.indexOf(key)
       if (index !== -1) {
-        // 存在相同的项，将原有关键字移除
-        // splice(从哪开始删除, 从这一项开始删除几个)
+        // 若已存在，先移除旧项，实现“位置更新”
         this.historyData.splice(index, 1)
       }
-      // 追加到数组的第一位
+      // 将最新搜索词插入首位
       this.historyData.unshift(key)
-      // 将历史数据存储到本地
+
+      // 维护历史记录容量
+      if (this.historyData.length > 10) {
+        this.historyData.pop()
+      }
+
+      // 同步到本地存储
       setHistoryList(this.historyData)
 
-      // 跳转到搜索列表页
+      // 跳转至搜索结果页
       this.$router.push(`/searchlist?search=${key}`)
     },
 
-    // 清空历史记录
+    /**
+     * 删除单条指定的搜索历史
+     * @param {String} key 要删除的关键词
+     */
+    removeHistory (key) {
+      this.historyData = this.historyData.filter(item => item !== key)
+      setHistoryList(this.historyData)
+    },
+
+    /**
+     * 清空全部搜索历史
+     * 包含确认弹窗提醒
+     */
     clear () {
-      // 清除页面的历史数据
-      this.historyData = []
-      // 清除本地的历史数据
-      setHistoryList([])
+      this.$dialog.confirm({
+        title: '温馨提示',
+        message: '确认清空所有搜索历史吗？'
+      }).then(() => {
+        // 清除内存与本地持久化数据
+        this.historyData = []
+        setHistoryList([])
+      }).catch(() => {
+        // 用户取消操作
+      })
     }
   }
 }
@@ -94,45 +150,63 @@ export default {
     color: @text-color;
   }
 
-  .search-history {
+  .search-history, .search-discover {
     padding: @spacing-lg;
 
     .title {
       height: 40px;
       line-height: 40px;
-      font-size: 15px;
-      font-weight: 500;
-      color: @text-color;
-      display: flex;
-      justify-content: space-between;
+      font-size: @font-size-lg;
+      display: flex;      justify-content: space-between;
       align-items: center;
-      margin-bottom: @spacing-md;
+      color: @text-color;
+      font-weight: bold;
     }
 
     .list {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-      gap: @spacing-md;
-    }
+      display: flex;
+      justify-content: flex-start;
+      flex-wrap: wrap;
+      padding-top: @spacing-sm;
 
-    .list-item {
-      text-align: center;
-      padding: @spacing-sm @spacing-md;
-      line-height: 1.2;
-      border-radius: 20px;
-      background: @gray-color;
-      font-size: 13px;
-      color: @text-color;
-      border: 1px solid transparent;
-      overflow: hidden;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-      transition: @transition-base;
+      .list-item {
+        width: 30%;
+        text-align: center;
+        padding: @spacing-sm @spacing-md;
+        font-size: @font-size-sm;
+        border-radius: 50px;
+        background: #f4f4f4;
+        margin-right: 3%;
+        margin-bottom: @spacing-md;
+        color: @text-color-secondary;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
 
-      &:active {
-        background: darken(@gray-color, 5%);
-        transform: scale(@active-scale);
+        span {
+          flex: 1;
+        }
+
+        .van-icon-cross {
+          margin-left: 4px;
+          color: #ccc;
+          &:active {
+            color: @primary-color;
+          }
+        }
       }
+    }
+  }
+
+  .search-discover {
+    padding-bottom: 0;
+    .list-item {
+      background-color: #fdf5f2;
+      color: @price-color;
     }
   }
 }

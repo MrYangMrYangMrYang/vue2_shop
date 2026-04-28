@@ -61,28 +61,28 @@
           <div class="order-item" @click="$router.push('/order?dataType=payment')">
             <div class="icon-wrapper payment">
               <van-icon name="clock-o" size="24" />
-              <span v-if="detail.pending_payment_count" class="badge">{{ detail.pending_payment_count }}</span>
+              <span v-if="orderCounts.payment" class="badge">{{ orderCounts.payment }}</span>
             </div>
             <span class="label">待付款</span>
           </div>
           <div class="order-item" @click="$router.push('/order?dataType=delivery')">
             <div class="icon-wrapper delivery">
               <van-icon name="logistics" size="24" />
-              <span v-if="detail.pending_delivery_count" class="badge">{{ detail.pending_delivery_count }}</span>
+              <span v-if="orderCounts.delivery" class="badge">{{ orderCounts.delivery }}</span>
             </div>
             <span class="label">待发货</span>
           </div>
           <div class="order-item" @click="$router.push('/order?dataType=received')">
             <div class="icon-wrapper received">
               <van-icon name="send-gift-o" size="24" />
-              <span v-if="detail.pending_received_count" class="badge">{{ detail.pending_received_count }}</span>
+              <span v-if="orderCounts.received" class="badge">{{ orderCounts.received }}</span>
             </div>
             <span class="label">待收货</span>
           </div>
           <div class="order-item" @click="$router.push('/order?dataType=comment')">
             <div class="icon-wrapper evaluation">
               <van-icon name="chat-o" size="24" />
-              <span v-if="detail.pending_comment_count" class="badge">{{ detail.pending_comment_count }}</span>
+              <span v-if="orderCounts.comment" class="badge">{{ orderCounts.comment }}</span>
             </div>
             <span class="label">待评价</span>
           </div>
@@ -133,42 +133,83 @@
 </template>
 
 <script>
-import { getUserInfoDetail } from '@/api/user.js'
+/**
+ * UserPage - 个人中心页面组件
+ * 核心功能：
+ * 1. 用户信息展示：包含头像、昵称、手机号及会员等级
+ * 2. 资产统计展示：积分、优惠券、收藏、足迹
+ * 3. 订单状态追踪：多维度订单状态入口 (待付款、待发货等) 及其数量徽标 (Badge)
+ * 4. 服务入口管理：集成设置、领券中心、帮助中心等功能入口
+ * 5. 登录校验逻辑：根据 Token 状态动态切换 UI 展示 (登录前 vs 登录后)
+ * 6. 数据同步：进入页面时自动分发 Action 获取最新的用户信息详情
+ */
+import { mapState, mapActions } from 'vuex'
 
 export default {
   name: 'UserPage',
   data () {
     return {
-      detail: {},
-      loading: true,
-      defaultAvatar: require('@/assets/default-avatar.png')
+      loading: true, // 初始加载状态
+      defaultAvatar: require('@/assets/default-avatar.png'), // 默认头像
+      detail: {} // 用户详情数据对象
     }
   },
   computed: {
+    ...mapState('user', ['userInfo', 'orderCounts']),
+    /**
+     * 根据本地存储的 Token 判断是否登录
+     */
     isLogin () {
-      return this.$store.getters.token
+      return !!this.userInfo.token
+    }
+  },
+  watch: {
+    /**
+     * 深度监听 Vuex 中 userInfo 的变化
+     * 当用户信息更新 (如修改个人资料返回) 时，实时同步到本地 detail 变量
+     */
+    userInfo: {
+      handler (newVal) {
+        if (newVal && newVal.token) {
+          this.detail = newVal
+        } else {
+          this.detail = {}
+        }
+      },
+      immediate: true,
+      deep: true
     }
   },
   created () {
+    // 页面创建时，如果已登录则触发异步 Action 获取后端详细数据
     if (this.isLogin) {
-      this.getUserInfoDetail()
+      this.getUserData()
     } else {
       this.loading = false
     }
   },
   methods: {
+    ...mapActions('user', ['getUserInfoAction']),
+
+    /**
+     * 数字格式化 (过万展示 w)
+     * @param {Number} num
+     */
     formatNumber (num) {
       if (num >= 10000) {
         return (num / 10000).toFixed(1) + 'w'
       }
       return num.toString()
     },
-    async getUserInfoDetail () {
+
+    /**
+     * 调用 Vuex Action 获取用户核心数据
+     */
+    async getUserData () {
       try {
-        const { data: { userInfo } } = await getUserInfoDetail()
-        this.detail = userInfo
+        await this.getUserInfoAction()
       } catch (error) {
-        console.error('获取用户信息失败:', error)
+        console.error('获取用户数据失败:', error)
       } finally {
         this.loading = false
       }

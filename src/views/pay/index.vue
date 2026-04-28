@@ -87,7 +87,11 @@
         </div>
         <div class="detail-cell">
           <span>优惠券</span>
-          <span class="val" :class="{ red: selectedCouponId > 0 }">{{ couponText === '未选择' ? '-￥0.00' : couponText }}</span>
+          <span class="val" :class="{ red: selectedCouponId > 0 }">{{ selectedCouponId > 0 ? `-￥${selectedCouponValue.toFixed(2)}` : '-￥0.00' }}</span>
+        </div>
+        <div class="detail-cell" v-if="usePoints">
+          <span>积分抵扣</span>
+          <span class="val red">-￥{{ pointsDiscount.toFixed(2) }}</span>
         </div>
         <div class="detail-cell">
           <span>配送费用</span>
@@ -101,17 +105,23 @@
       <div class="coupon-popup">
         <div class="title">选择优惠券</div>
         <div class="content">
-          <div class="coupon-item" v-for="item in coupons" :key="item.id" @click="selectCoupon(item)">
+          <div
+            class="coupon-item"
+            v-for="item in availableCoupons"
+            :key="item.id"
+            :class="{ disabled: !item.isAvailable }"
+            @click="selectCoupon(item)"
+          >
             <div class="left">
               <div class="price">¥<span>{{ item.value }}</span></div>
             </div>
             <div class="right">
               <div class="name">{{ item.name }}</div>
-              <div class="time">有效期至 {{ item.endTime }}</div>
+              <div class="time">满 {{ item.minAmount }} 元可用 | 有效期至 {{ item.endTime }}</div>
             </div>
             <van-icon name="success" v-if="selectedCouponId === item.id" color="#ee0a24" />
           </div>
-          <div v-if="coupons.length === 0" class="empty">暂无可用优惠券</div>
+          <div v-if="availableCoupons.length === 0" class="empty">暂无可用优惠券</div>
         </div>
         <div class="footer">
           <van-button block round type="danger" @click="showCoupon = false">确定</van-button>
@@ -121,7 +131,7 @@
 
     <!-- 底部提交 -->
     <van-submit-bar
-      :price="order.orderTotalPrice * 100"
+      :price="finalTotalPrice * 100"
       :button-text="submitting ? '提交中...' : '提交订单'"
       :loading="submitting"
       @submit="submitOrder"
@@ -130,53 +140,96 @@
 </template>
 
 <script>
-import { getAddressList } from '@/api/address'
+/**
+ * PayPage - 订单结算台组件
+ * 核心功能：
+ * 1. 展示订单商品明细及总价
+ * 2. 处理收货地址选择与展示 (集成地址库映射)
+ * 3. 优惠券选择逻辑 (包含门槛校验)
+ * 4. 积分抵扣逻辑 (积分与金额转换)
+ * 5. 实时计算最终支付金额
+ * 6. 支持多种下单模式：购物车结算、商品详情立即购买、未支付订单重新支付
+ */
 import { checkOrder, submitOrder } from '@/api/order'
 import { Dialog } from 'vant'
 import { areaList } from '@/utils/area'
+import { mapActions, mapGetters } from 'vuex'
 export default {
   name: 'PayPage',
   data () {
     return {
-      addressList: [],
-      order: {},
-      personal: {},
-      remark: '', // 备注留言
-      submitting: false, // 提交状态
-      showCoupon: false, // 是否显示优惠券弹窗
-      usePoints: false, // 是否使用积分
-      selectedCouponId: 0, // 选中的优惠券ID
-      coupons: [ // 模拟优惠券数据
-        { id: 1, name: '全场通用满减券', value: 5, endTime: '2026-12-31' },
-        { id: 2, name: '新用户专享券', value: 10, endTime: '2026-12-31' }
+      order: {}, // 订单结算预览数据
+      personal: {}, // 用户个人资产信息 (积分等)
+      remark: '', // 买家留言备注
+      submitting: false, // 订单提交按钮加载状态
+      showCoupon: false, // 优惠券选择弹窗显隐
+      usePoints: false, // 是否勾选使用积分抵扣
+      selectedCouponId: 0, // 当前选中的优惠券 ID
+      // 模拟优惠券数据列表
+      coupons: [
+        { id: 1, name: '全场通用满减券', value: 5, minAmount: 0, endTime: '2026-12-31' },
+        { id: 2, name: '新用户专享券', value: 10, minAmount: 50, endTime: '2026-12-31' },
+        { id: 3, name: '大额满减券', value: 50, minAmount: 500, endTime: '2026-12-31' }
       ]
     }
   },
   computed: {
+    ...mapGetters('address', ['selectedAddress']),
+    /**
+     * 动态计算当前订单可用的优惠券
+     */
+    availableCoupons () {
+      const totalPrice = parseFloat(this.order.orderTotalPrice || 0)
+      return this.coupons.map(coupon => ({
+        ...coupon,
+        isAvailable: totalPrice >= coupon.minAmount
+      }))
+    },
+    /**
+     * 获取当前选中优惠券的面值
+     */
+    selectedCouponValue () {
+      if (this.selectedCouponId === 0) return 0
+      const coupon = this.coupons.find(item => item.id === this.selectedCouponId)
+      return coupon ? coupon.value : 0
+    },
+    /**
+     * 计算积分抵扣金额 (假设 100 积分 = 1 元)
+     */
+    pointsDiscount () {
+      if (!this.usePoints) return 0
+      const points = this.personal.points || 0
+      // 抵扣金额不能超过商品总价扣除优惠券后的剩余金额
+      return Math.min(points / 100, this.order.orderTotalPrice - this.selectedCouponValue)
+    },
+    /**
+     * 计算最终应付总金额
+     */
+    finalTotalPrice () {
+      const basePrice = parseFloat(this.order.orderTotalPrice || 0)
+      const final = basePrice - this.selectedCouponValue - this.pointsDiscount
+      return Math.max(0, final).toFixed(2)
+    },
+    /**
+     * 优惠券单元格显示的文本
+     */
     couponText () {
       if (this.selectedCouponId === 0) return '未选择'
       const coupon = this.coupons.find(item => item.id === this.selectedCouponId)
       return coupon ? `-¥${coupon.value}` : '未选择'
     },
-    selectedAddress () {
-      // 优先从 addressList 中寻找被选中的地址
-      const selectedId = sessionStorage.getItem('selected_address_id')
-      if (selectedId && this.addressList.length > 0) {
-        const found = this.addressList.find(item => String(item.address_id) === String(selectedId))
-        if (found) return found
-      }
-      // 否则返回第一个（通常是后端返回的默认地址）
-      return this.addressList[0] || {}
-    },
+    /**
+     * 格式化完整的收货地址字符串
+     */
     longAddress () {
       const addr = this.selectedAddress
       if (!addr.address_id) return ''
 
-      // 极致兼容显示逻辑：优先根据 ID 从本地 areaList 映射地名
       let p = ''
       let c = ''
       let r = ''
 
+      // 1. 优先从 areaList 工具中映射省市区名称
       if (addr.province_id && areaList.province_list[addr.province_id]) {
         p = areaList.province_list[addr.province_id]
       }
@@ -187,7 +240,7 @@ export default {
         r = areaList.county_list[addr.region_id]
       }
 
-      // 如果 ID 映射失败，则回退到 region 对象
+      // 2. 如果映射失败，则尝试读取后端返回的 region 冗余字段
       if (!p || !c || !r) {
         const region = addr.region || {}
         p = p || (typeof region.province === 'string' ? region.province : '')
@@ -198,27 +251,16 @@ export default {
       const fullRegion = (p + c + r) || '其他'
       return (fullRegion === '其他' || fullRegion === '其他其他其他' ? '其他其他其他' : fullRegion) + addr.detail
     },
-    mode () {
-      return this.$route.query.mode
-    },
-    cartIds () {
-      return this.$route.query.cartIds
-    },
-    goodsId () {
-      return this.$route.query.goodsId
-    },
-    goodsSkuId () {
-      return this.$route.query.goodsSkuId
-    },
-    goodsNum () {
-      return this.$route.query.goodsNum
-    },
-    orderId () {
-      return this.$route.query.orderId
-    }
+    // 各种路由参数映射
+    mode () { return this.$route.query.mode },
+    cartIds () { return this.$route.query.cartIds },
+    goodsId () { return this.$route.query.goodsId },
+    goodsSkuId () { return this.$route.query.goodsSkuId },
+    goodsNum () { return this.$route.query.goodsNum },
+    orderId () { return this.$route.query.orderId }
   },
   created () {
-    this.getAddressList()
+    this.getAddressAction()
     this.getOrderList()
   },
   // 路由离开前，如果是前往非地址页面，则清理选中状态
@@ -229,6 +271,7 @@ export default {
     next()
   },
   methods: {
+    ...mapActions('address', ['getAddressAction']),
     async submitOrder () {
       if (this.submitting) return
       if (!this.selectedAddress.address_id) {
@@ -275,6 +318,8 @@ export default {
           if (this.mode === 'cart') {
             await this.$store.dispatch('cart/getCartAction')
           }
+          // 同步刷新个人中心的订单角标
+          this.$store.dispatch('user/getUserInfoAction')
 
           // 2. 模拟支付过程
           // 之前的 loading 可能被响应拦截器 Toast.clear() 掉了，这里重新开启一个
@@ -308,15 +353,15 @@ export default {
       }
     },
     selectCoupon (item) {
+      if (!item.isAvailable) {
+        this.$toast('未达到该优惠券使用门槛')
+        return
+      }
       if (this.selectedCouponId === item.id) {
         this.selectedCouponId = 0
       } else {
         this.selectedCouponId = item.id
       }
-    },
-    async getAddressList () {
-      const { data: { list } } = await getAddressList()
-      this.addressList = list
     },
     async getOrderList () {
       // 购物车结算
@@ -546,5 +591,51 @@ export default {
 
 /deep/ .van-submit-bar {
   border-top: 1px solid #f7f8fa;
+  .coupon-popup {
+    .content {
+      padding: @spacing-md;
+      max-height: 400px;
+      overflow-y: auto;
+      .coupon-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: @spacing-md;
+        padding: @spacing-md;
+        border: 1px solid #fdeced;
+        border-radius: 8px;
+        background-color: #fffafb;
+        position: relative;
+        &.disabled {
+          opacity: 0.6;
+          filter: grayscale(1);
+          background-color: #f5f5f5;
+          border-color: #eee;
+        }
+        .left {
+          color: @primary-color;
+          margin-right: @spacing-lg;
+          .price {
+            font-size: 14px;
+            span {
+              font-size: 24px;
+              font-weight: bold;
+            }
+          }
+        }
+        .right {
+          flex: 1;
+          .name {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 4px;
+          }
+          .time {
+            font-size: 11px;
+            color: @text-light-color;
+          }
+        }
+      }
+    }
+  }
 }
 </style>

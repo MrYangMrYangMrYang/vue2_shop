@@ -1,3 +1,11 @@
+/**
+ * Area List - 省市区行政区划静态数据
+ * 用于 Vant Area 组件或地址编辑页面的级联选择
+ * 数据结构：
+ * - province_list: 省级列表 { [code]: name }
+ * - city_list: 市级列表 { [code]: name }
+ * - county_list: 区/县级列表 { [code]: name }
+ */
 export const areaList = {
   province_list: {
     110000: '北京市',

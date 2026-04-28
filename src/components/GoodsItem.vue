@@ -1,7 +1,7 @@
 <template>
   <div v-if="item.goods_id" class="goods-item" @click="$router.push(`/prodetail/${item.goods_id}`)">
     <div class="left">
-      <img :src="item.goods_image" alt="" />
+      <img v-lazy="item.goods_image" alt="" />
     </div>
     <div class="right">
       <p class="tit text-ellipsis-2">
@@ -17,12 +17,19 @@
 </template>
 
 <script>
+/**
+ * GoodsItem - 商品列表项组件
+ * 核心功能：
+ * 1. 基础信息展示：渲染商品图片（支持懒加载）、标题（自动两行省略）、销量及优惠价
+ * 2. 页面跳转：点击整个组件区域自动跳转至对应的商品详情页 (/prodetail/:id)
+ * 3. 性能优化：通过 v-lazy 指令实现图片懒加载，提升长列表滚动性能
+ */
 import { formatPrice, formatSales } from '@/utils/format'
 
 export default {
   name: 'GoodsItem',
-  // 接收父组件传过来的数据
   props: {
+    // 商品数据对象，包含 goods_id, goods_name, goods_image, goods_sales, goods_price_min 等
     item: {
       type: Object,
       default: () => {
@@ -31,6 +38,9 @@ export default {
     }
   },
   methods: {
+    /**
+     * 将格式化工具函数挂载到 methods，方便在 template 中直接调用
+     */
     formatPrice,
     formatSales
   }

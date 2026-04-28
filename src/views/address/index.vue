@@ -2,6 +2,7 @@
   <div class="address-list">
     <van-nav-bar title="收货地址" left-arrow @click-left="$router.go(-1)" />
     <van-address-list
+      v-if="list.length > 0"
       v-model="chosenAddressId"
       :list="list"
       default-tag-text="默认"
@@ -9,39 +10,65 @@
       @edit="onEdit"
       @select="onSelect"
     />
+    <van-empty v-else description="暂无收货地址">
+      <van-button round type="danger" class="bottom-button" @click="onAdd">
+        添加新地址
+      </van-button>
+    </van-empty>
   </div>
 </template>
 
 <script>
+/**
+ * AddressPage - 收货地址列表组件
+ * 核心功能：
+ * 1. 展示用户已保存的收货地址列表
+ * 2. 处理地址的增删改查逻辑跳转
+ * 3. 极致兼容性处理：适配不同格式的后端地址数据 (ID 映射、Region 对象解析)
+ * 4. 默认地址逻辑：自动置顶显示，并根据用户信息同步默认状态
+ * 5. 流程联动：支持从结算页跳转选择地址并自动返回
+ */
 import { getAddressList } from '@/api/address'
 import { getUserInfoDetail } from '@/api/user'
 import { areaList } from '@/utils/area'
+import { mapMutations, mapState } from 'vuex'
 
 export default {
   name: 'AddressPage',
   data () {
     return {
-      chosenAddressId: '',
-      list: [],
-      userInfo: {}
+      chosenAddressId: '', // 当前选中的地址 ID
+      list: [], // 格式化后的地址列表
+      userInfo: {} // 用户详细信息 (包含默认地址 ID)
     }
   },
+  computed: {
+    ...mapState('address', ['selectedId'])
+  },
   async created () {
-    // 同时获取地址列表和用户信息，确保能拿到默认地址 ID
+    // 初始选中状态优先从 Vuex 获取全局共享的选中 ID
+    this.chosenAddressId = this.selectedId
+    // 并行获取地址列表和用户信息
     this.getList()
     this.getUserInfo()
   },
   methods: {
+    ...mapMutations('address', ['setSelectedId']),
+    /**
+     * 获取用户信息，用于同步最新的默认地址状态
+     */
     async getUserInfo () {
       try {
         const { data: { userInfo } } = await getUserInfoDetail()
         this.userInfo = userInfo
-        // 获取完用户信息后，重新计算列表中的默认状态
         this.refreshDefaultStatus()
       } catch (error) {
         console.error('获取用户信息失败:', error)
       }
     },
+    /**
+     * 刷新列表中的默认地址标记，并处理自动选中逻辑
+     */
     refreshDefaultStatus () {
       const defaultIdFromUser = this.userInfo.address_id
       if (!defaultIdFromUser) return
@@ -55,23 +82,28 @@ export default {
         return 0
       })
 
-      const defaultAddr = this.list.find(item => item.isDefault)
-      if (defaultAddr) {
-        this.chosenAddressId = defaultAddr.id
+      // 如果当前没有选中的 ID，则自动选中默认地址
+      if (!this.chosenAddressId) {
+        const defaultAddr = this.list.find(item => item.isDefault)
+        if (defaultAddr) {
+          this.chosenAddressId = defaultAddr.id
+          this.setSelectedId(defaultAddr.id)
+        }
       }
     },
+    /**
+     * 获取并格式化地址列表数据
+     */
     async getList () {
       const { data } = await getAddressList()
       const list = data.list || []
 
-      // 这里的 default_id 可能在 data 下，也可能在 userInfo 下
       const defaultIdFromUser = data.default_id || (data.userInfo && data.userInfo.address_id) || this.userInfo.address_id
 
       this.list = list.map((item, index) => {
-        // 极致兼容显示逻辑：
+        // 极致兼容显示逻辑：尝试多种方式解析省市区
         let p = ''; let c = ''; let r = ''
-
-        // 策略1：优先根据 ID 从本地 areaList 映射地名（解决后端返回“其他”的问题）
+        // 方式1：通过 ID 映射本地 areaList
         if (item.province_id && areaList.province_list[item.province_id]) {
           p = areaList.province_list[item.province_id]
         }
@@ -82,7 +114,7 @@ export default {
           r = areaList.county_list[item.region_id]
         }
 
-        // 策略2：如果 ID 映射失败（不在简易列表里），则回退到 region 对象解析
+        // 方式2：解析 region 冗余字段 (支持逗号分割字符串或嵌套对象)
         if (!p || !c || !r) {
           if (typeof item.region === 'string' && item.region.includes(',')) {
             const arr = item.region.split(',')
@@ -108,14 +140,9 @@ export default {
           }
         }
 
-        // 最后保底
         const fullRegion = (p + c + r) || '其他'
 
-        // 极致兼容性判断默认地址
-        // 1. item.is_default 为 1 或 '1' 或 true
-        // 2. address_id 匹配外部返回的 default_id
-        // 3. address_id 匹配用户对象中的 address_id
-        // 4. 兼容其他可能的字段名如 isDefault, default
+        // 兼容性判断默认地址状态
         const isDefault = String(item.is_default) === '1' ||
                          item.is_default === true ||
                          String(item.isDefault) === '1' ||
@@ -133,20 +160,28 @@ export default {
           isDefault
         }
       }).sort((a, b) => {
-        // 默认地址置顶
+        // 默认地址置顶排序
         if (a.isDefault && !b.isDefault) return -1
         if (!a.isDefault && b.isDefault) return 1
         return 0
       })
 
+      // 默认选中第一个默认地址
       const defaultAddr = this.list.find(item => item.isDefault)
       if (defaultAddr) {
         this.chosenAddressId = defaultAddr.id
+        this.setSelectedId(defaultAddr.id)
       }
     },
+    /**
+     * 新增地址跳转
+     */
     onAdd () {
       this.$router.push('/address-edit')
     },
+    /**
+     * 编辑地址跳转
+     */
     onEdit (item) {
       this.$router.push({
         path: '/address-edit',
@@ -155,13 +190,13 @@ export default {
         }
       })
     },
+    /**
+     * 选择地址事件 (包含结算流程自动返回逻辑)
+     */
     onSelect (item) {
-      // 如果是从结算页跳过来的，可以选择地址并返回
+      const addressId = item.address_id || item.id
+      this.setSelectedId(addressId)
       if (this.$route.query.from === 'checkout') {
-        // 将选中的地址 ID 存储在 session 中，方便结算页读取
-        // 兼容处理：Vant AddressList 可能会将 ID 放在 item.id 或 item.address_id
-        const addressId = item.address_id || item.id
-        sessionStorage.setItem('selected_address_id', addressId)
         this.$router.back()
       }
     }
@@ -175,6 +210,18 @@ export default {
   min-height: 100vh;
   ::v-deep .van-address-list__bottom {
     bottom: 20px;
+    background: transparent;
+    &::after {
+      display: none;
+    }
+  }
+  ::v-deep .van-hairline--top-bottom::after {
+    border-width: 0;
+  }
+  .bottom-button {
+    width: 160px;
+    height: 40px;
+    margin-top: 20px;
   }
 }
 </style>

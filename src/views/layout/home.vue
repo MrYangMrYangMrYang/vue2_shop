@@ -17,8 +17,8 @@
       <van-skeleton title avatar :row="3" :loading="loading">
         <!-- 轮播图 -->
         <van-swipe class="my-swipe" :autoplay="3000" indicator-color="white">
-          <van-swipe-item v-for="item in bannerList" :key="item.imgUrl">
-            <img :src="item.imgUrl" alt="">
+          <van-swipe-item v-for="item in bannerList" :key="item.imgUrl" @click="$router.push('/category')">
+            <img v-lazy="item.imgUrl" alt="">
           </van-swipe-item>
         </van-swipe>
 
@@ -44,7 +44,7 @@
           <div class="seckill-list">
             <div v-for="i in 3" :key="i" class="seckill-item" @click="$router.push('/category')">
               <div class="img-wrapper">
-                <img src="https://img01.yzcdn.cn/vant/ipad.jpeg" alt="">
+                <img v-lazy="'https://img01.yzcdn.cn/vant/ipad.jpeg'" alt="">
                 <div class="tag">热卖</div>
               </div>
               <div class="price">
@@ -60,8 +60,8 @@
         </div>
 
         <!-- 主会场 -->
-        <div class="main">
-          <img src="@/assets/main.png" alt="">
+        <div class="main" @click="$router.push('/category')">
+          <img v-lazy="require('@/assets/main.png')" alt="">
         </div>
 
         <!-- 猜你喜欢 -->
@@ -109,6 +109,15 @@
 </template>
 
 <script>
+/**
+ * HomePage - 首页组件
+ * 核心功能：
+ * 1. 首页多模块展示 (轮播图、秒杀、主会场、猜你喜欢列表)
+ * 2. 骨架屏加载状态处理
+ * 3. 瀑布流/无限滚动加载更多数据
+ * 4. 回到顶部功能
+ * 5. 秒杀倒计时展示
+ */
 import GoodsItem from '@/components/GoodsItem.vue'
 import { getHomeData } from '@/api/home'
 
@@ -119,66 +128,76 @@ export default {
   },
   data () {
     return {
-      bannerList: [],
-      navList: [],
-      prodList: [],
-      loading: true,
-      loadingMore: false,
-      finished: false,
-      currentPage: 1,
-      showBackTop: false,
-      seckillTime: 3600 * 1000 * 5,
+      bannerList: [], // 轮播图列表数据
+      navList: [], // 导航菜单列表 (暂未使用)
+      prodList: [], // 商品列表数据
+      loading: true, // 初始骨架屏加载状态
+      loadingMore: false, // 底部加载更多状态
+      finished: false, // 是否已加载完所有数据
+      currentPage: 1, // 当前加载的页码
+      showBackTop: false, // 是否显示“回到顶部”按钮
+      seckillTime: 3600 * 1000 * 5, // 秒杀剩余时间 (模拟 5 小时)
       // 加载控制相关
-      isLoadingLocked: false, // 加载锁
+      isLoadingLocked: false, // 瀑布流加载锁，防止瞬间重复触发
       lockTimer: null, // 锁定时器
-      scrollHandler: null // 滚动处理函数
+      scrollHandler: null // 滚动事件处理器引用
     }
   },
   async created () {
+    // 初始获取首页聚合数据
     try {
       const { data: { pageData } } = await getHomeData()
       this.bannerList = pageData.items[1].data
       this.navList = pageData.items[3].data
       this.prodList = pageData.items[6].data || []
     } finally {
+      // 无论成功失败，都关闭初始骨架屏
       this.loading = false
     }
   },
   mounted () {
-    // 绑定滚动事件
+    // 监听全局滚动事件，用于处理回到顶部和瀑布流加载
     window.addEventListener('scroll', this.handleScroll)
 
-    // 初始化时检查一次是否已触底
+    // 初始渲染后，检查内容是否填满一屏，若不满则尝试加载更多
     this.$nextTick(() => {
       this.checkIfNeedLoadMore()
     })
   },
   beforeDestroy () {
+    // 页面销毁前必须移除全局滚动监听，防止内存泄漏和逻辑异常
     window.removeEventListener('scroll', this.handleScroll)
     if (this.lockTimer) {
       clearTimeout(this.lockTimer)
     }
   },
   methods: {
-    // 格式化时间（补零）
+    /**
+     * 时间格式化补零
+     * @param {Number} time
+     */
     formatTime (time) {
       return time < 10 ? '0' + time : time
     },
 
-    // 处理滚动事件
+    /**
+     * 全局滚动事件回调
+     */
     handleScroll () {
       const scrollTop = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop
 
-      // 控制回到顶部按钮显示/隐藏
+      // 1. 动态显示/隐藏“回到顶部”按钮 (阈值 400px)
       this.showBackTop = scrollTop > 400
 
-      // 检查是否需要加载更多
+      // 2. 检查瀑布流触底逻辑
       this.checkIfNeedLoadMore()
     },
 
-    // 检查是否需要加载更多
+    /**
+     * 瀑布流触底检测逻辑
+     */
     checkIfNeedLoadMore () {
-      // 如果已锁定、正在加载、已完成，则不再触发
+      // 状态拦截：已锁定、正在加载中、或已全部完成，则直接跳过
       if (this.isLoadingLocked || this.loadingMore || this.finished) {
         return
       }
@@ -187,17 +206,17 @@ export default {
       const windowHeight = window.innerHeight
       const documentHeight = document.documentElement.scrollHeight
 
-      // 距离底部 200px 时触发加载（提前加载，体验更好）
+      // 提前加载阈值：距离底部 200px 时即开始预加载下一页
       const threshold = 200
 
       if (scrollTop + windowHeight >= documentHeight - threshold) {
-        // 锁定，防止重复触发
+        // 1. 触发加载锁
         this.isLoadingLocked = true
 
-        // 执行加载
+        // 2. 执行数据追加
         this.loadMore()
 
-        // 1.5秒后解锁（确保加载完成且滚动停止）
+        // 3. 延时解锁 (1.5s 后)，确保网络请求有缓冲时间且用户滚动感知平滑
         if (this.lockTimer) {
           clearTimeout(this.lockTimer)
         }
@@ -205,7 +224,7 @@ export default {
           this.isLoadingLocked = false
           this.lockTimer = null
 
-          // 解锁后再次检查是否需要加载（防止内容不够一屏）
+          // 解锁后立即自检一次，防止内容仍不足以触发下一次滚动的情况
           this.$nextTick(() => {
             this.checkIfNeedLoadMore()
           })
@@ -213,7 +232,9 @@ export default {
       }
     },
 
-    // 回到顶部
+    /**
+     * 平滑回到顶部
+     */
     scrollToTop () {
       window.scrollTo({
         top: 0,
@@ -221,38 +242,38 @@ export default {
       })
     },
 
-    // 加载更多数据
+    /**
+     * 加载更多商品数据 (模拟分页)
+     */
     async loadMore () {
       if (this.loadingMore || this.finished) return
 
       this.loadingMore = true
 
       try {
+        // 模拟分页请求，当前演示版本重复获取首页数据并追加
         const { data: { pageData } } = await getHomeData()
         const newData = pageData.items[6].data || []
 
+        // 模拟最多加载 3 页数据
         if (this.currentPage < 3) {
-          // 去重
+          // 简易去重逻辑，防止 ID 重复导致的列表渲染警告
           const existingIds = this.prodList.map(item => item.goods_id)
           const uniqueNewData = newData.filter(item => !existingIds.includes(item.goods_id))
 
           if (uniqueNewData.length > 0) {
-            // 追加新数据
+            // 将新数据合并到原列表
             this.prodList = [...this.prodList, ...uniqueNewData]
             this.currentPage++
           } else {
-            // 没有新数据了
             this.finished = true
           }
         } else {
+          // 达到模拟的最大页数，标记完成
           this.finished = true
         }
       } catch (error) {
-        this.$toast.fail('加载失败，请重试')
         console.error('加载更多失败:', error)
-
-        // 加载失败也要解锁
-        this.isLoadingLocked = false
       } finally {
         this.loadingMore = false
       }

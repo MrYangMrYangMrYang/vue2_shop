@@ -69,9 +69,11 @@
             <div class="price">¥<span>{{ item.value }}</span></div>
           </div>
           <div class="right">
-            <div class="name">{{ item.name }}</div>
-            <div class="desc">满{{ item.min }}元可用</div>
-            <van-button size="mini" round type="danger" :disabled="item.claimed" @click="claimCoupon(item)">
+            <div class="info">
+              <div class="name">{{ item.name }}</div>
+              <div class="desc">满{{ item.min }}元可用</div>
+            </div>
+            <van-button size="small" round type="danger" :disabled="item.claimed" @click="claimCoupon(item)">
               {{ item.claimed ? '已领取' : '立即领取' }}
             </van-button>
           </div>
@@ -104,6 +106,13 @@
 </template>
 
 <script>
+/**
+ * MyResource - 个人资源/中心组件
+ * 核心功能：
+ * 1. 展示用户的各类资源信息 (收藏、足迹、积分、优惠券)
+ * 2. 领券中心：展示可领取的优惠券并处理领取逻辑
+ * 3. 动态路由适配：根据 query.type 参数切换显示不同的资源模块
+ */
 export default {
   name: 'MyResource',
   data () {
@@ -144,6 +153,10 @@ export default {
     }
   },
   methods: {
+    /**
+     * 获取资源列表数据
+     * 根据当前 type 类型加载模拟数据
+     */
     getList () {
       // 模拟数据加载
       if (this.type === 'favorite' || this.type === 'footprint') {
@@ -174,6 +187,10 @@ export default {
         ]
       }
     },
+    /**
+     * 领取优惠券逻辑
+     * @param {Object} item 优惠券对象
+     */
     claimCoupon (item) {
       this.$toast.loading({
         message: '领取中...',
@@ -185,6 +202,10 @@ export default {
         this.$toast.success('领取成功')
       }, 500)
     },
+    /**
+     * 处理商品卡片的操作 (如取消收藏、加入购物车)
+     * @param {Object} item 商品对象
+     */
     handleAction (item) {
       if (this.type === 'favorite') {
         this.$toast('取消收藏成功')
@@ -354,7 +375,7 @@ export default {
     align-items: center;
     background: #fff5f5;
     margin-bottom: 12px;
-    padding: 16px;
+    padding: 12px 16px;
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(238, 10, 36, 0.05);
     position: relative;
@@ -369,13 +390,13 @@ export default {
       background: #ee0a24;
     }
     .left {
-      width: 80px;
+      width: 70px;
       text-align: center;
       .price {
         color: #ee0a24;
         font-size: 14px;
         span {
-          font-size: 28px;
+          font-size: 24px;
           font-weight: bold;
           margin-left: 2px;
         }
@@ -384,18 +405,26 @@ export default {
     .right {
       flex: 1;
       margin-left: 20px;
-      .name {
-        font-size: 16px;
-        font-weight: bold;
-        color: #323233;
-        margin-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      .info {
+        flex: 1;
+        .name {
+          font-size: 15px;
+          font-weight: bold;
+          color: #323233;
+          margin-bottom: 4px;
+        }
+        .time, .desc {
+          font-size: 12px;
+          color: #969799;
+        }
       }
-      .time, .desc {
-        font-size: 12px;
-        color: #969799;
-      }
-      .desc {
-        margin-bottom: 8px;
+      .van-button {
+        padding: 0 12px;
+        height: 28px;
+        margin-left: 10px;
       }
     }
   }

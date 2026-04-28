@@ -131,20 +131,20 @@
 
     <!-- 空购物车 -->
     <div class="empty-cart" v-else>
-      <div class="empty-content">
-        <img src="@/assets/empty.png" alt="购物车空空如也">
-        <p class="tips">您的购物车还是空的</p>
-        <p class="sub-tips">快去挑选心仪的商品吧</p>
+      <van-empty
+        class="custom-image"
+        :image="require('@/assets/empty.png')"
+        description="购物车还是空的哦，快去挑选心仪的商品吧"
+      >
         <van-button
-          type="primary"
           round
-          size="large"
+          type="danger"
+          class="bottom-button"
           @click="$router.push('/')"
-          class="shop-btn"
         >
           去逛逛
         </van-button>
-      </div>
+      </van-empty>
 
       <div class="recommend-section" v-if="!isLogin">
         <div class="section-title">
@@ -168,6 +168,18 @@
 </template>
 
 <script>
+/**
+ * CartPage - 购物车页面组件
+ * 核心功能：
+ * 1. 列表展示：基于 Vuex 同步展示用户购物车商品
+ * 2. 交互管理：
+ *    - 商品选择 (单选/全选)
+ *    - 数量修改 (CountBox 联动 Vuex Action)
+ *    - 编辑模式切换 (支持批量删除、批量收藏)
+ * 3. 价格计算：实时计算选中商品的总价与总数
+ * 4. 结算流程：携带选中商品 ID 跳转至结算页 (Pay)
+ * 5. 异常处理：区分未登录、空购物车等多种状态展示
+ */
 import CountBox from '@/components/CountBox.vue'
 import { mapGetters, mapState } from 'vuex'
 import { formatPrice } from '@/utils/format'
@@ -179,17 +191,21 @@ export default {
   },
   data () {
     return {
-      isEdit: false
+      isEdit: false // 是否处于编辑模式 (管理状态)
     }
   },
   computed: {
     ...mapState('cart', ['cartList']),
     ...mapGetters('cart', ['cartTotal', 'selCartList', 'selCount', 'selPrice', 'isAllChecked']),
+    /**
+     * 判断当前登录状态
+     */
     isLogin () {
       return this.$store.getters.token
     }
   },
   created () {
+    // 进入购物车页面，若已登录则立即同步最新的购物车数据
     if (this.isLogin) {
       this.$store.dispatch('cart/getCartAction')
     }
@@ -197,14 +213,27 @@ export default {
   methods: {
     formatPrice,
 
+    /**
+     * 切换单个商品的选中状态
+     * @param {Number} goodsId
+     */
     toggleCheck (goodsId) {
       this.$store.commit('cart/toggleCheck', goodsId)
     },
 
+    /**
+     * 全选/取消全选
+     */
     toggleAllCheck () {
       this.$store.commit('cart/toggleAllCheck', !this.isAllChecked)
     },
 
+    /**
+     * 修改商品数量
+     * @param {Number} goodsNum 新数量
+     * @param {Number} goodsId 商品ID
+     * @param {Number} goodsSkuId 规格ID
+     */
     changeCount (goodsNum, goodsId, goodsSkuId) {
       this.$store.dispatch('cart/changeCountAction', {
         goodsNum,
@@ -213,6 +242,9 @@ export default {
       })
     },
 
+    /**
+     * 批量删除选中的商品
+     */
     async handleDel () {
       if (this.selCount === 0) return
 
@@ -225,20 +257,27 @@ export default {
           cancelButtonText: '取消'
         })
 
+        // 异步调用 Vuex Action 执行后端删除
         await this.$store.dispatch('cart/delSelectAction')
         this.$toast.success('删除成功')
         this.isEdit = false
       } catch (error) {
-        // 用户取消删除
+        // 用户取消删除或接口异常
       }
     },
 
+    /**
+     * 批量收藏选中的商品 (模拟)
+     */
     handleBatchFavorite () {
       if (this.selCount === 0) return
       this.$toast.success('已移入收藏夹')
       this.isEdit = false
     },
 
+    /**
+     * 跳转至结算页
+     */
     goPay () {
       if (this.selCount === 0) return
 
@@ -246,6 +285,7 @@ export default {
         path: '/pay',
         query: {
           mode: 'cart',
+          // 传递选中项的 ID 字符串，供结算页获取数据
           cartIds: this.selCartList.map(item => item.id).join(',')
         }
       })
@@ -539,41 +579,19 @@ export default {
     background-color: #fff;
     padding-bottom: 20px; // 添加底部内边距
     box-sizing: border-box;
+    padding-top: 100px;
 
-    .empty-content {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 60px 40px;
-
-      img {
+    .custom-image {
+      padding: 0;
+      ::v-deep .van-empty__image {
         width: 160px;
         height: 160px;
-        margin-bottom: 24px;
       }
+    }
 
-      .tips {
-        font-size: 16px;
-        color: #323233;
-        margin-bottom: 8px;
-        font-weight: 500;
-      }
-
-      .sub-tips {
-        font-size: 14px;
-        color: #969799;
-        margin-bottom: 32px;
-      }
-
-      .shop-btn {
-        width: 200px;
-        height: 44px;
-        background: linear-gradient(135deg, @primary-color, lighten(@primary-color, 15%));
-        border: none;
-        font-size: 16px;
-        font-weight: 500;
-      }
+    .bottom-button {
+      width: 160px;
+      height: 40px;
     }
 
     .recommend-section {

@@ -50,6 +50,14 @@
 </template>
 
 <script>
+/**
+ * ProfilePage - 个人资料编辑页面组件
+ * 核心功能：
+ * 1. 获取并展示用户当前的个人资料 (头像、昵称、手机号)
+ * 2. 支持修改昵称
+ * 3. 支持上传/修改头像 (目前使用 base64 模拟上传)
+ * 4. 提交修改并同步更新 Vuex 中的用户信息
+ */
 import { getUserInfoDetail, updateUserInfo } from '@/api/user'
 
 export default {
@@ -57,18 +65,21 @@ export default {
   data () {
     return {
       userInfo: {
-        nickName: '',
-        avatar: '',
-        mobile: ''
+        nickName: '', // 昵称
+        avatar: '', // 头像 URL (或 base64)
+        mobile: '' // 手机号 (只读)
       },
-      saving: false,
-      defaultAvatar: require('@/assets/default-avatar.png')
+      saving: false, // 保存按钮加载状态
+      defaultAvatar: require('@/assets/default-avatar.png') // 默认头像
     }
   },
   created () {
     this.getUserInfo()
   },
   methods: {
+    /**
+     * 获取用户信息详情
+     */
     async getUserInfo () {
       try {
         const { data: { userInfo } } = await getUserInfoDetail()
@@ -77,20 +88,24 @@ export default {
         console.error('获取用户信息失败', error)
       }
     },
+    /**
+     * 保存个人资料修改
+     */
     async saveProfile () {
+      // 基础校验
       if (!this.userInfo.nickName || !this.userInfo.nickName.trim()) {
         this.$toast('昵称不能为空')
         return
       }
       this.saving = true
       try {
-        // 调用接口保存
+        // 调用接口保存修改
         await updateUserInfo({
           nickName: this.userInfo.nickName,
           avatar: this.userInfo.avatar
         })
         this.$toast.success('保存成功')
-        // 同步更新本地 store
+        // 成功后同步更新本地 Vuex Store，确保全局状态一致
         this.$store.commit('user/setUserInfo', {
           ...this.$store.state.user.userInfo,
           nickName: this.userInfo.nickName,
@@ -100,9 +115,8 @@ export default {
           this.$router.go(-1)
         }, 1000)
       } catch (error) {
-        // 如果接口报错（可能是模拟接口不存在），我们也尝试更新本地以演示效果
+        // 兼容性逻辑：即使接口报错（可能是模拟环境问题），也尝试更新本地以演示效果
         console.error('保存失败', error)
-        // 即使失败也同步到本地 store 方便演示
         this.$store.commit('user/setUserInfo', {
           ...this.$store.state.user.userInfo,
           nickName: this.userInfo.nickName,
@@ -116,9 +130,12 @@ export default {
         this.saving = false
       }
     },
+    /**
+     * 头像上传后的回调
+     * @param {Object} file Vant Uploader 返回的文件对象
+     */
     afterRead (file) {
-      // 实际开发中这里应该上传文件到服务器获取 url
-      // 这里暂时用 base64 模拟
+      // 实际开发中需上传至服务器，此处暂时转为 base64 进行本地模拟
       this.userInfo.avatar = file.content
       this.$toast.success('头像已选择')
     }

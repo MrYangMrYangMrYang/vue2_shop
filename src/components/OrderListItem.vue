@@ -11,7 +11,7 @@
     <div class="list">
       <div class="list-item" v-for="(goods, index) in item.goods" :key="index">
         <div class="goods-img">
-          <img :src="goods.goods_image" alt="">
+          <img v-lazy="goods.goods_image" alt="">
         </div>
         <div class="goods-content">
           <div class="name text-ellipsis-2">{{ goods.goods_name }}</div>
@@ -33,14 +33,21 @@
         <van-button v-else-if="item.delivery_status === 10" size="small" round plain @click="$router.push(`/after-sales?orderId=${item.order_id}&type=2`)">申请退款</van-button>
         <template v-else-if="item.delivery_status === 20">
           <van-button size="small" round plain @click="showLogistics(item)">查看物流</van-button>
-          <van-button size="small" round color="#fa2209">确认收货</van-button>
+          <van-button size="small" round color="#fa2209" @click="onConfirmReceipt">确认收货</van-button>
         </template>
-        <van-button v-else-if="item.delivery_status === 30" size="small" round color="#fa2209">确认收货</van-button>
+        <van-button v-else-if="item.delivery_status === 30" size="small" round color="#fa2209" @click="onConfirmReceipt">确认收货</van-button>
       </template>
       <template v-if="item.order_status === 30">
-        <van-button size="small" round plain>评价</van-button>
+        <van-button size="small" round plain @click="onComment">评价</van-button>
         <van-button size="small" round plain @click="$router.push(`/after-sales?orderId=${item.order_id}`)">申请售后</van-button>
       </template>
+    </div>
+
+    <!-- 支付倒计时 (仅待支付订单显示) -->
+    <div class="countdown-bar" v-if="item.order_status === 10 && item.pay_status === 10">
+      <van-icon name="clock-o" />
+      <span>支付剩余时间：</span>
+      <van-count-down :time="countDownTime" format="mm:ss" @finish="onCountDownFinish" />
     </div>
 
     <!-- 物流弹窗 -->
@@ -63,8 +70,23 @@
 </template>
 
 <script>
+/**
+ * OrderListItem - 订单列表项组件
+ * 核心功能：
+ * 1. 展示订单基本信息：订单时间、当前状态标签
+ * 2. 展示订单商品列表：图片、名称、规格、价格及数量
+ * 3. 订单状态交互：
+ *    - 待支付：显示取消订单、立即付款按钮，及支付倒计时
+ *    - 待发货：显示申请退款按钮
+ *    - 待收货：显示查看物流、确认收货按钮
+ *    - 已完成：显示评价、申请售后按钮
+ * 4. 物流详情展示：点击查看物流弹出物流轨迹弹窗
+ */
+import { Dialog, Toast } from 'vant'
+
 export default {
   props: {
+    // 订单详情对象
     item: {
       type: Object,
       default: () => {
@@ -73,6 +95,9 @@ export default {
     }
   },
   computed: {
+    /**
+     * 根据订单状态返回对应的 Vant Tag 类型
+     */
     statusTagType () {
       // 状态：10-进行中，20-已取消，30-已完成
       switch (this.item.order_status) {
@@ -81,11 +106,20 @@ export default {
         case 20: return 'default'
         default: return 'primary'
       }
+    },
+    /**
+     * 模拟订单支付倒计时
+     * 实际业务中应使用后端返回的剩余秒数
+     */
+    countDownTime () {
+      return 15 * 60 * 1000
     }
   },
   data () {
     return {
+      // 物流弹窗显示状态
       logisticsVisible: false,
+      // 模拟物流轨迹数据
       steps: [
         { status: '已签收, 感谢使用顺丰, 期待再次为您服务', time: '2026-04-23 10:00:00' },
         { status: '【北京市】快件已到达 北京朝阳营业点', time: '2026-04-23 08:30:00' },
@@ -95,8 +129,49 @@ export default {
     }
   },
   methods: {
+    /**
+     * 显示物流轨迹弹窗
+     * @param {Object} item 订单对象
+     */
     showLogistics (item) {
+      // 模拟根据订单 ID 改变物流信息，展示“动态”感
+      if (item.order_id % 2 === 0) {
+        this.steps = [
+          { status: '【上海市】快件已到达 上海静安营业点', time: '2026-04-25 09:00:00' },
+          { status: '快件已从上海分拨中心发出', time: '2026-04-24 22:00:00' },
+          { status: '商家已发货', time: '2026-04-24 10:00:00' }
+        ]
+      }
       this.logisticsVisible = true
+    },
+    /**
+     * 确认收货交互
+     */
+    async onConfirmReceipt () {
+      try {
+        await Dialog.confirm({
+          title: '提示',
+          message: '确认已收到货物了吗？'
+        })
+        Toast.success('确认收货成功')
+        // 实际项目中这里需要调用接口并刷新列表
+      } catch (e) {
+        // 取消不处理
+      }
+    },
+    /**
+     * 评价按钮点击
+     */
+    onComment () {
+      Toast('评价功能开发中...')
+    },
+    /**
+     * 倒计时结束回调
+     * 触发父组件 cancel 事件，同步更新状态
+     */
+    onCountDownFinish () {
+      this.$emit('cancel', this.item.order_id)
+      Toast('订单支付超时，已自动取消')
     }
   }
 }
@@ -202,6 +277,27 @@ export default {
     .van-button {
       margin-left: @spacing-sm;
       min-width: 80px;
+    }
+  }
+
+  .countdown-bar {
+    margin-top: @spacing-md;
+    padding: @spacing-sm @spacing-md;
+    background-color: #fff7f7;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    color: @primary-color;
+    font-size: 12px;
+    .van-icon {
+      margin-right: 4px;
+      font-size: 14px;
+    }
+    .van-count-down {
+      color: @primary-color;
+      font-size: 12px;
+      margin-left: 2px;
+      font-weight: bold;
     }
   }
 

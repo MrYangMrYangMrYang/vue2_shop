@@ -9,12 +9,12 @@ import Cart from '@/views/layout/cart'
 import User from '@/views/layout/user'
 
 // 不常用的组件异步加载
-const Login = () => import('@/views/login')
-const Order = () => import('@/views/order')
-const Pay = () => import('@/views/pay')
-const Prodetail = () => import('@/views/prodetail')
-const Search = () => import('@/views/search/index')
-const SearchList = () => import('@/views/search/list')
+const Login = () => import(/* webpackPrefetch: true */ '@/views/login')
+const Order = () => import(/* webpackPrefetch: true */ '@/views/order')
+const Pay = () => import(/* webpackPrefetch: true */ '@/views/pay')
+const Prodetail = () => import(/* webpackPrefetch: true */ '@/views/prodetail')
+const Search = () => import(/* webpackPrefetch: true */ '@/views/search/index')
+const SearchList = () => import(/* webpackPrefetch: true */ '@/views/search/list')
 const Address = () => import('@/views/address')
 const AddressEdit = () => import('@/views/address/edit')
 const Help = () => import('@/views/help')

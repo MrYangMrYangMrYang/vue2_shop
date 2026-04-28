@@ -28,6 +28,14 @@
 </template>
 
 <script>
+/**
+ * SearchListPage - 商品列表页组件
+ * 核心功能：
+ * 1. 根据搜索关键字或分类 ID 展示商品列表
+ * 2. 提供多种排序方式：综合、销量、价格
+ * 3. 支持价格升降序切换
+ * 4. 集成 GoodsItem 组件展示单项商品信息
+ */
 import GoodsItem from '@/components/GoodsItem.vue'
 import { getSearchData } from '@/api/search'
 export default {
@@ -37,10 +45,10 @@ export default {
   },
   data () {
     return {
-      page: 1,
-      prodList: [],
-      sortType: 'all', // all, sales, price
-      sortPrice: 0, // 0: 升序, 1: 降序
+      page: 1, // 当前页码
+      prodList: [], // 商品列表数据
+      sortType: 'all', // 排序类型：all(综合), sales(销量), price(价格)
+      sortPrice: 0, // 价格排序：0(升序), 1(降序)
       sortOptions: [
         { text: '综合排序', value: 'all' },
         { text: '销量排序', value: 'sales' },
@@ -53,7 +61,9 @@ export default {
     }
   },
   computed: {
-    // 获取地址栏的搜索关键字
+    /**
+     * 从路由中获取搜索关键字
+     */
     querySearch () {
       return this.$route.query.search
     }
@@ -62,6 +72,9 @@ export default {
     this.getSearchList()
   },
   methods: {
+    /**
+     * 获取搜索结果列表
+     */
     async getSearchList () {
       try {
         const { data: { list } } = await getSearchData({
@@ -73,11 +86,14 @@ export default {
         })
         this.prodList = list.data
       } catch (e) {
-        // console.log(e)
+        // 错误处理
       }
     },
+    /**
+     * 切换排序类型
+     */
     onSortTypeChange () {
-      // 切换类型时，根据类型设置默认的升降序
+      // 切换类型时，设置默认的升降序逻辑
       if (this.sortType === 'sales') {
         this.sortPrice = 1 // 销量默认降序
       } else if (this.sortType === 'price') {
@@ -86,6 +102,9 @@ export default {
       this.page = 1
       this.getSearchList()
     },
+    /**
+     * 切换价格升降序
+     */
     onSortPriceChange () {
       this.page = 1
       this.getSearchList()

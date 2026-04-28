@@ -13,8 +13,7 @@
       </van-cell-group>
 
       <van-cell-group title="系统设置">
-        <van-cell title="关于我们" is-link icon="info-o" />
-        <van-cell title="清除缓存" is-link icon="delete-o" @click="clearCache" />
+        <van-cell title="关于我们" is-link icon="info-o" @click="onAboutUs" />
       </van-cell-group>
 
       <div class="logout-section">
@@ -32,9 +31,26 @@
 </template>
 
 <script>
+/**
+ * SettingsPage - 设置中心页面组件
+ * 核心功能：
+ * 1. 提供个人资料、收货地址管理入口
+ * 2. 系统相关信息展示入口 (关于我们)
+ * 3. 核心功能：处理退出登录逻辑 (清除本地存储及 Vuex 状态)
+ */
 export default {
   name: 'SettingsPage',
   methods: {
+    /**
+     * 关于我们点击事件
+     */
+    onAboutUs () {
+      this.$toast('相关功能正在开发中...')
+    },
+    /**
+     * 退出登录逻辑
+     * 弹出确认框，成功后分发 logout action 并重定向至登录页
+     */
     logout () {
       this.$dialog.confirm({
         title: '温馨提示',
@@ -42,20 +58,14 @@ export default {
         confirmButtonText: '退出',
         confirmButtonColor: '#ee0a24'
       }).then(() => {
+        // 分发 Vuex Action 执行退出清理工作 (清除 Token/UserInfo 等)
         this.$store.dispatch('user/logout')
         this.$toast.success('已退出登录')
+        // 使用 replace 替换当前历史记录，防止回退到设置页
         this.$router.replace('/login')
-      }).catch(() => {})
-    },
-    clearCache () {
-      this.$toast.loading({
-        message: '清理中...',
-        forbidClick: true,
-        duration: 1000
+      }).catch(() => {
+        // 取消退出
       })
-      setTimeout(() => {
-        this.$toast.success('缓存清理完成')
-      }, 1000)
     }
   }
 }

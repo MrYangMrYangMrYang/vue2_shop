@@ -1,29 +1,33 @@
-// 对请求模块进行封装
+/**
+ * Request Utility - 基于 Axios 封装的网络请求模块
+ * 核心功能：
+ * 1. 设置接口基础路径 (BaseURL) 和 超时时间
+ * 2. 请求拦截器：自动展示加载提示、全局携带 Token
+ * 3. 响应拦截器：统一处理业务状态码、清除加载提示、全局错误提示、401 自动跳转处理
+ */
 import axios from 'axios'
 import { Toast } from 'vant'
 import store from '@/store'
 
-// 创建 axios 实例，将来对创建出来的实例，进行自定义配置
-// 好处:不会污染原始的 axios 实例
+// 创建 axios 实例
 const instance = axios.create({
   baseURL: 'http://smart-shop.itheima.net/index.php?s=/api',
   timeout: 3000
-  // headers: { 'X-Custom-Header': 'foobar' }
 })
 
-// 自定义配置 请求、响应、拦截器
-// 添加请求拦截器
+/**
+ * 请求拦截器
+ */
 instance.interceptors.request.use(function (config) {
-  // 在发送请求之前做些什么
-  // 使用 Toast.loading 方法展示加载提示
+  // 1. 全局展示加载中状态
   Toast.loading({
     message: '加载中...',
-    forbidClick: true, // 禁用背景点击(节流处理，防止多次无效点击)
-    loadingType: 'spinner', // 自定义loading图标
-    duration: 0 // 默认是两秒后消失设值为0后就不会自动消失了
+    forbidClick: true, // 防止多次点击
+    loadingType: 'spinner',
+    duration: 0 // 持续展示，直到手动关闭
   })
 
-  // 只要有token，就在请求时携带，便于请求需要授权的接口
+  // 2. 自动携带 Token
   const token = store.getters.token
   if (token) {
     config.headers['Access-Token'] = token
@@ -32,33 +36,48 @@ instance.interceptors.request.use(function (config) {
 
   return config
 }, function (error) {
-  // 对请求错误做些什么
   return Promise.reject(error)
 })
 
-// 添加响应拦截器
+/**
+ * 响应拦截器
+ */
 instance.interceptors.response.use(function (response) {
-  // 2xx 范围的状态码都会触发该函数。
-  // 对请求结束后的响应数据做点什么
-  // console.log(response)
-  const res = response.data // 默认axios的返回值会多包装一层data，需要响应拦截器中处理一下
-  // 返回结果不是200状态码都会触发该函数。
+  // 1. 解构业务数据
+  const res = response.data
+
+  // 2. 统一处理非 200 的业务逻辑错误
   if (res.status !== 200) {
-    // 给错误提示, Toast 默认是单例模式，后面的 Toast调用了，会将前一个 Toast 效果覆盖
-    // 同时只能存在一个 Toast
-    Toast(res.message)
-    // 抛出一个错误的promise
+    Toast(res.message || '业务逻辑错误')
     return Promise.reject(res.message)
   } else {
-    // 正确的情况下直接往下走，顺便掉清除loading效果
+    // 3. 正确返回，清除加载状态
     Toast.clear()
   }
   return res
 }, function (error) {
-  // 超出 2xx 范围的状态码都会触发该函数。
-  // 对响应错误做点什么
+  // 4. 处理 HTTP 状态码错误
+  Toast.clear()
+  if (!error.response) {
+    Toast('网络异常，请检查网络连接')
+    return Promise.reject(error)
+  }
+
+  const { status } = error.response
+  switch (status) {
+    case 401:
+      Toast('登录已过期，请重新登录')
+      // 触发登出操作：清除本地缓存并重置状态
+      store.commit('user/setUserInfo', {})
+      break
+    case 500:
+      Toast('服务器内部错误')
+      break
+    default:
+      Toast(error.message || '系统繁忙，请稍后再试')
+  }
+
   return Promise.reject(error)
 })
 
-// 导出配置好的实例
 export default instance

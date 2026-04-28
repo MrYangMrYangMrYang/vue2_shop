@@ -40,38 +40,50 @@
 </template>
 
 <script>
+/**
+ * LoginPage - 登录页面组件
+ * 核心功能：
+ * 1. 手机号+图形验证码+短信验证码登录
+ * 2. 验证码倒计时逻辑
+ * 3. 登录前的表单校验与协议勾选检查
+ * 4. 登录成功后的 Token 持久化与页面跳转
+ */
 import { codeLogin, getMsgCode, getPicCode } from '@/api/login'
 
 export default {
   name: 'LoginPage',
   data () {
     return {
-      picKey: '', // 将来请求传递的图形验证码唯一标识
-      picUrl: '', // 存储请求渲染的图片地址
-      totalSecond: 60, // 总秒数
-      second: 60, // 当前秒数，开定时器对 second--
-      timer: null, // 定时器 id
-      mobile: '', // 手机号
+      picKey: '', // 图形验证码唯一标识，用于后端验证
+      picUrl: '', // 图形验证码图片地址 (base64)
+      totalSecond: 60, // 倒计时总时长
+      second: 60, // 当前剩余秒数
+      timer: null, // 定时器句柄
+      mobile: '', // 用户输入的手机号
       picCode: '', // 用户输入的图形验证码
-      msgCode: '', // 短信验证码
-      isAgree: false, // 是否同意协议
-      loading: false // 登录状态
+      msgCode: '', // 用户输入的短信验证码
+      isAgree: false, // 是否勾选同意用户协议
+      loading: false // 登录按钮的加载状态
     }
   },
   async created () {
+    // 页面初始化时获取图形验证码
     this.getPicCode()
   },
   methods: {
-    // 获取图形验证码
+    /**
+     * 获取/刷新图形验证码
+     */
     async getPicCode () {
       const { data: { base64, key } } = await getPicCode()
-      this.picUrl = base64 // 存储地址
-      this.picKey = key // 存储唯一标识
+      this.picUrl = base64
+      this.picKey = key
     },
 
-    // 校验 手机号 和 图形验证码 是否合法
-    // 通过校验，返回true
-    // 不通过校验，返回false
+    /**
+     * 校验手机号和图形验证码格式
+     * @returns {Boolean} 是否通过基础校验
+     */
     validFn () {
       if (!/^1[3-9]\d{9}$/.test(this.mobile)) {
         this.$toast('请输入正确的手机号')
@@ -84,60 +96,60 @@ export default {
       return true
     },
 
-    // 获取短信验证码
+    /**
+     * 获取短信验证码并启动倒计时
+     */
     async getCode () {
-      if (!this.validFn()) {
-        // 如果没通过校验，没必要往下走了
-        return
-      }
+      // 1. 基础表单校验
+      if (!this.validFn()) return
 
-      // 当目前没有定时器开着，且 totalSecond 和 second 一致 (秒数归位) 才可以倒计时
+      // 2. 状态检查：当前未在倒计时且秒数已归位
       if (!this.timer && this.second === this.totalSecond) {
-        // 发送请求
-        // 预期：希望如果响应的status非200，最好抛出一个promise错误，await只会等待成功的promise
+        // 3. 请求接口发送短信
         await getMsgCode(this.picCode, this.picKey, this.mobile)
-        // console.log(res)
         this.$toast('短信发送成功，注意查收')
 
-        // 开启倒计时
+        // 4. 开启 60s 倒计时
         this.timer = setInterval(() => {
           this.second--
-
           if (this.second <= 0) {
             clearInterval(this.timer)
-            this.timer = null // 重置定时器 id
-            this.second = this.totalSecond // 归位
+            this.timer = null
+            this.second = this.totalSecond
           }
         }, 1000)
       }
     },
 
-    // 登录
+    /**
+     * 执行登录操作
+     */
     async login () {
+      // 防止重复点击
       if (this.loading) return
 
-      // 校验
-      if (!this.validFn()) {
-        return
-      }
+      // 1. 基础格式校验
+      if (!this.validFn()) return
       if (!/^\d{6}$/.test(this.msgCode)) {
         this.$toast('请输入正确的手机验证码')
         return
       }
 
+      // 2. 必须同意协议
       if (!this.isAgree) {
         this.$toast('请先阅读并同意用户协议')
         return
       }
 
-      // 发送请求
+      // 3. 调用登录接口
       this.loading = true
       try {
         const res = await codeLogin(this.mobile, this.msgCode)
-        // 将token信息存入vuex中
+        // 4. 存储用户信息到 Vuex (Token 等)
         this.$store.commit('user/setUserInfo', res.data)
         this.$toast('登录成功')
-        // 进行判断，看地址栏有无回跳地址
+
+        // 5. 跳转回之前的页面或首页
         const url = this.$route.query.backUrl || '/'
         this.$router.replace(url)
       } catch (error) {
@@ -145,7 +157,9 @@ export default {
       }
     }
   },
-  // 离开页面清除定时器
+  /**
+   * 页面销毁前清理定时器，防止内存泄漏
+   */
   destroyed () {
     clearInterval(this.timer)
   }

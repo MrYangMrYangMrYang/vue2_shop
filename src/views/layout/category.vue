@@ -63,26 +63,38 @@
 </template>
 
 <script>
+/**
+ * CategoryPage - 商品分类页面组件
+ * 核心功能：
+ * 1. 联动式双栏布局：左侧展示一级分类，右侧展示对应的二级分类网格
+ * 2. 初始数据获取与智能索引：自动选中第一个包含子分类的项目
+ * 3. 搜索入口集成：点击顶部搜索框跳转至搜索页
+ * 4. 分类导航逻辑：点击二级分类跳转至对应的商品列表页 (SearchList)
+ */
 import { getCategoryData } from '@/api/category'
 
 export default {
   name: 'CategoryPage',
   data () {
     return {
-      list: [],
-      activeIndex: 0,
-      defaultImg: 'https://img01.yzcdn.cn/vant/cat.jpeg'
+      list: [], // 分类树形数据列表
+      activeIndex: 0, // 当前激活的一级分类索引
+      defaultImg: 'https://img01.yzcdn.cn/vant/cat.jpeg' // 缺省图
     }
   },
   created () {
     this.getCategoryList()
   },
   methods: {
+    /**
+     * 获取全部分类数据
+     */
     async getCategoryList () {
       try {
         const { data: { list } } = await getCategoryData()
         this.list = list
 
+        // 体验优化：初始化时自动定位到第一个有内容的分类
         const firstValidIndex = list.findIndex(item => item.children?.length > 0)
         if (firstValidIndex !== -1) {
           this.activeIndex = firstValidIndex

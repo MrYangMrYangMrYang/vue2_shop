@@ -1,23 +1,54 @@
-.DS_Store
-node_modules
-/dist
+# ===========================================
+# Yang-Shoping - Git Ignore Configuration
+# ===========================================
 
+# ---------- Dependency ----------
+node_modules/
+.pnp
+.pnp.js
 
-# local env files
+# ---------- Build Output ----------
+dist/
+build/
+
+# ---------- Environment Variables ----------
+.env
 .env.local
 .env.*.local
 
-# Log files
+# ---------- Log Files ----------
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+lerna-debug.log*
 
-# Editor directories and files
-.idea
-.vscode
+# ---------- Editor & IDE ----------
+.idea/
+.vscode/
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ---------- Cache ----------
+.cache/
+.temp/
+*.cache
+*.tmp
+*.temp
+
+# ---------- Testing ----------
+coverage/
+.nyc_output/
+
+# ---------- Misc ----------
+*.log
+*.bak
+*.swp
+*~
+.lock-wscript

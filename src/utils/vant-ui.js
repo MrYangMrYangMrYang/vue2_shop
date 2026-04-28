@@ -1,7 +1,15 @@
-// 按需导入vant组件
+/**
+ * Vant UI - 移动端组件库按需导入模块
+ * 核心功能：
+ * 1. 统一管理项目中使用的 Vant 组件
+ * 2. 减少打包体积，提升加载速度
+ */
 import Vue from 'vue'
-import { Tab, Tabs, Checkbox, Dialog, ActionSheet, Icon, Search, Swipe, SwipeItem, Grid, GridItem, Toast, Button, Switch, Rate, Tabbar, TabbarItem, NavBar, Skeleton, Divider, GoodsAction, GoodsActionIcon, GoodsActionButton, SubmitBar, CountDown, Cell, CellGroup, Popup, AddressList, Collapse, CollapseItem, Field, Loading, Tag, Uploader, Empty, Radio, RadioGroup, DropdownMenu, DropdownItem, AddressEdit } from 'vant'
+import { Lazyload, Tab, Tabs, Checkbox, Dialog, ActionSheet, Icon, Search, Swipe, SwipeItem, Grid, GridItem, Toast, Button, Switch, Rate, Tabbar, TabbarItem, NavBar, Skeleton, Divider, GoodsAction, GoodsActionIcon, GoodsActionButton, SubmitBar, CountDown, Cell, CellGroup, Popup, AddressList, Collapse, CollapseItem, Field, Loading, Tag, Uploader, Empty, Radio, RadioGroup, DropdownMenu, DropdownItem, AddressEdit, PullRefresh, List } from 'vant'
 
+Vue.use(Lazyload)
+Vue.use(PullRefresh)
+Vue.use(List)
 Vue.use(Tab)
 Vue.use(Tabs)
 Vue.use(Checkbox)
