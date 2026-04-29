@@ -30,7 +30,10 @@
       <template v-if="item.order_status === 10">
         <van-button v-if="item.pay_status === 10" size="small" round plain @click="$emit('cancel', item.order_id)">取消订单</van-button>
         <van-button v-if="item.pay_status === 10" size="small" round color="#fa2209" @click="$router.push(`/pay?mode=buyNow&orderId=${item.order_id}`)">立刻付款</van-button>
-        <van-button v-else-if="item.delivery_status === 10" size="small" round plain @click="$router.push(`/after-sales?orderId=${item.order_id}&type=2`)">申请退款</van-button>
+        <template v-else-if="item.delivery_status === 10">
+          <van-button size="small" round plain color="#1989fa" @click="goToOrderDetail">订单详情</van-button>
+          <van-button size="small" round plain type="danger" @click="$router.push(`/after-sales?orderId=${item.order_id}&type=2`)">申请退款</van-button>
+        </template>
         <template v-else-if="item.delivery_status === 20">
           <van-button size="small" round plain @click="showLogistics(item)">查看物流</van-button>
           <van-button size="small" round color="#fa2209" @click="onConfirmReceipt">确认收货</van-button>
@@ -172,6 +175,16 @@ export default {
     onCountDownFinish () {
       this.$emit('cancel', this.item.order_id)
       Toast('订单支付超时，已自动取消')
+    },
+    /**
+     * 跳转到订单详情页
+     * 先将完整订单数据存入 Vuex，再进行路由跳转
+     */
+    goToOrderDetail () {
+      // 将当前订单的完整数据存入 Vuex
+      this.$store.commit('order/setCurrentOrder', this.item)
+      // 跳转到订单详情页
+      this.$router.push(`/order/detail/${this.item.order_id}`)
     }
   }
 }

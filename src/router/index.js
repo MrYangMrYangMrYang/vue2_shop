@@ -11,6 +11,7 @@ import User from '@/views/layout/user'
 // 不常用的组件异步加载
 const Login = () => import(/* webpackPrefetch: true */ '@/views/login')
 const Order = () => import(/* webpackPrefetch: true */ '@/views/order')
+const OrderDetail = () => import('@/views/order/detail')
 const Pay = () => import(/* webpackPrefetch: true */ '@/views/pay')
 const Prodetail = () => import(/* webpackPrefetch: true */ '@/views/prodetail')
 const Search = () => import(/* webpackPrefetch: true */ '@/views/search/index')
@@ -45,6 +46,7 @@ const router = new VueRouter({
       ]
     },
     { path: '/order', component: Order },
+    { path: '/order/detail/:id', component: OrderDetail },
     { path: '/pay', component: Pay },
     // 动态路由传参，确认将来是哪个商品，路由参数中携带id
     { path: '/prodetail/:id', component: Prodetail },
@@ -75,8 +77,10 @@ const authUrls = ['/pay', '/order', '/address', '/address-edit', '/settings', '/
 
 router.beforeEach((to, from, next) => {
   // console.log(to, from, next)
-  // 看 to.path 是否在 authUrls 中出现过
-  if (!authUrls.includes(to.path)) {
+  // 检查 to.path 是否以 authUrls 中的某个路径开头（支持子路由）
+  const needAuth = authUrls.some(url => to.path.startsWith(url))
+
+  if (!needAuth) {
     // 非权限页面直接放行
     next()
     return

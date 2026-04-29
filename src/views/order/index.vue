@@ -2,7 +2,7 @@
   <div class="order">
     <van-nav-bar title="我的订单" left-arrow @click-left="$router.go(-1)" fixed placeholder />
 
-    <van-tabs v-model="active" sticky offset-top="46px" @change="onTabChange">
+    <van-tabs v-model="active" @change="onTabChange">
       <van-tab name="all" title="全部"></van-tab>
       <van-tab name="payment" title="待支付"></van-tab>
       <van-tab name="delivery" title="待发货"></van-tab>
@@ -29,6 +29,7 @@
           v-else
           v-model="loading"
           :finished="finished"
+          :finished-text="list.length > 0 ? '—— 已经到底啦 ——' : ''"
           @load="onLoad"
           :immediate-check="false"
         >
@@ -193,6 +194,21 @@ export default {
     width: 160px;
     height: 40px;
   }
+}
+
+/deep/ .van-tabs {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 46px;
+  z-index: 99;
+  background-color: #fff;
+  margin-top: -1px; // 消除与导航栏的缝隙
+}
+
+/deep/ .van-pull-refresh {
+  margin-top: -8px; // 抵消 fixed tabs 离开文档流后的空白
+  padding-top: 44px; // 为固定的 Tab 栏预留空间
 }
 
 .skeleton-list {

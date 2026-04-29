@@ -121,6 +121,14 @@ export default {
   padding-bottom: 80px;
   background-color: #f7f8fa;
   min-height: calc(100vh - 46px);
+
+  /deep/ .van-radio__icon--checked {
+    .van-icon {
+      color: #fff;
+      background-color: #ee0a24;
+      border-color: #ee0a24;
+    }
+  }
 }
 
 .upload-box {

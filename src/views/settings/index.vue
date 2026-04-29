@@ -50,6 +50,8 @@ export default {
     /**
      * 退出登录逻辑
      * 弹出确认框，成功后分发 logout action 并重定向至登录页
+     * 注意：不传递 backUrl 参数，确保登录页不会显示返回按钮
+     * 防止用户在未登录状态下返回到需要权限的页面
      */
     logout () {
       this.$dialog.confirm({
@@ -62,7 +64,10 @@ export default {
         this.$store.dispatch('user/logout')
         this.$toast.success('已退出登录')
         // 使用 replace 替换当前历史记录，防止回退到设置页
-        this.$router.replace('/login')
+        // 不带 backUrl 参数 → 登录页将隐藏返回按钮
+        this.$router.replace({
+          path: '/login'
+        })
       }).catch(() => {
         // 取消退出
       })
