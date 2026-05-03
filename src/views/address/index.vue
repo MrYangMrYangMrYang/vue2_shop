@@ -30,11 +30,12 @@
  */
 import { getAddressList } from '@/api/address'
 import { getUserInfoDetail } from '@/api/user'
-import { areaList } from '@/utils/area'
 import { mapMutations, mapState } from 'vuex'
+import areaMixin from '@/mixins/areaMixin'
 
 export default {
   name: 'AddressPage',
+  mixins: [areaMixin],
   data () {
     return {
       chosenAddressId: '', // 当前选中的地址 ID
@@ -101,48 +102,8 @@ export default {
       const defaultIdFromUser = data.default_id || (data.userInfo && data.userInfo.address_id) || this.userInfo.address_id
 
       this.list = list.map((item, index) => {
-        // 极致兼容显示逻辑：尝试多种方式解析省市区
-        let p = ''; let c = ''; let r = ''
-        // 方式1：通过 ID 映射本地 areaList
-        if (item.province_id && areaList.province_list[item.province_id]) {
-          p = areaList.province_list[item.province_id]
-        }
-        if (item.city_id && areaList.city_list[item.city_id]) {
-          c = areaList.city_list[item.city_id]
-        }
-        if (item.region_id && areaList.county_list[item.region_id]) {
-          r = areaList.county_list[item.region_id]
-        }
+        const fullAddress = this.buildFullAddress(item)
 
-        // 方式2：解析 region 冗余字段 (支持逗号分割字符串或嵌套对象)
-        if (!p || !c || !r) {
-          if (typeof item.region === 'string' && item.region.includes(',')) {
-            const arr = item.region.split(',')
-            p = p || arr[0] || ''
-            c = c || arr[1] || ''
-            r = r || arr[2] || ''
-          } else if (item.region && (Array.isArray(item.region) || typeof item.region === 'object')) {
-            const getVal = (obj) => {
-              if (!obj) return ''
-              if (typeof obj === 'string') return obj
-              return obj.label || obj.value || ''
-            }
-
-            if (Array.isArray(item.region)) {
-              p = p || getVal(item.region[0]) || ''
-              c = c || getVal(item.region[1]) || ''
-              r = r || getVal(item.region[2]) || ''
-            } else {
-              p = p || getVal(item.region.province) || item.province || ''
-              c = c || getVal(item.region.city) || item.city || ''
-              r = r || getVal(item.region.region) || getVal(item.region.county) || item.county || ''
-            }
-          }
-        }
-
-        const fullRegion = (p + c + r) || '其他'
-
-        // 兼容性判断默认地址状态
         const isDefault = String(item.is_default) === '1' ||
                          item.is_default === true ||
                          String(item.isDefault) === '1' ||
@@ -156,7 +117,7 @@ export default {
           id: item.address_id || item.id || index,
           name: item.name,
           tel: item.phone,
-          address: (fullRegion === '其他' || fullRegion === '其他其他其他' ? '其他其他其他' : fullRegion) + item.detail,
+          address: fullAddress,
           isDefault
         }
       }).sort((a, b) => {

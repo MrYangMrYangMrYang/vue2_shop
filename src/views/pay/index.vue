@@ -152,10 +152,11 @@
  */
 import { checkOrder, submitOrder } from '@/api/order'
 import { Dialog } from 'vant'
-import { areaList } from '@/utils/area'
 import { mapActions, mapGetters } from 'vuex'
+import areaMixin from '@/mixins/areaMixin'
 export default {
   name: 'PayPage',
+  mixins: [areaMixin],
   data () {
     return {
       order: {}, // 订单结算预览数据
@@ -224,32 +225,7 @@ export default {
     longAddress () {
       const addr = this.selectedAddress
       if (!addr.address_id) return ''
-
-      let p = ''
-      let c = ''
-      let r = ''
-
-      // 1. 优先从 areaList 工具中映射省市区名称
-      if (addr.province_id && areaList.province_list[addr.province_id]) {
-        p = areaList.province_list[addr.province_id]
-      }
-      if (addr.city_id && areaList.city_list[addr.city_id]) {
-        c = areaList.city_list[addr.city_id]
-      }
-      if (addr.region_id && areaList.county_list[addr.region_id]) {
-        r = areaList.county_list[addr.region_id]
-      }
-
-      // 2. 如果映射失败，则尝试读取后端返回的 region 冗余字段
-      if (!p || !c || !r) {
-        const region = addr.region || {}
-        p = p || (typeof region.province === 'string' ? region.province : '')
-        c = c || (typeof region.city === 'string' ? region.city : '')
-        r = r || (typeof region.region === 'string' ? region.region : '')
-      }
-
-      const fullRegion = (p + c + r) || '其他'
-      return (fullRegion === '其他' || fullRegion === '其他其他其他' ? '其他其他其他' : fullRegion) + addr.detail
+      return this.buildFullAddress(addr)
     },
     // 各种路由参数映射
     mode () { return this.$route.query.mode },
