@@ -5,7 +5,7 @@
  * 2. 统计各状态订单数量 (用于个人中心徽标显示)
  * 3. 处理退出登录逻辑 (清空状态与本地缓存)
  */
-import { getInfo, setInfo } from '@/utils/storage'
+import { getInfo, setInfo, removeInfo } from '@/utils/storage'
 import { getUserInfoDetail } from '@/api/user'
 import { getMyOrderList } from '@/api/order'
 
@@ -52,6 +52,10 @@ export default {
      */
     setOrderCounts(state, counts) {
       state.orderCounts = counts
+    },
+    clearUserInfo (state) {
+      state.userInfo = { token: '', userInfo: '' }
+      removeInfo()
     }
   },
   actions: {
@@ -59,8 +63,7 @@ export default {
      * 退出登录
      */
     logout(context) {
-      // 个人信息重置
-      context.commit('setUserInfo', {})
+      context.commit('clearUserInfo')
       context.commit('setOrderCounts', {
         payment: 0,
         delivery: 0,

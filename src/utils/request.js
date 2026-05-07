@@ -67,8 +67,7 @@ instance.interceptors.response.use(function (response) {
   switch (status) {
     case 401:
       Toast('登录已过期，请重新登录')
-      // 触发登出操作：清除本地缓存并重置状态
-      store.commit('user/setUserInfo', {})
+      store.commit('user/clearUserInfo')
       break
     case 500:
       Toast('服务器内部错误')
