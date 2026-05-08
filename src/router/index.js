@@ -96,4 +96,11 @@ router.beforeEach((to, from, next) => {
   }
 })
 
+router.onError((error) => {
+  const pattern = /Redirected when going from "\/[^"]*" to "[^"]*" via a navigation guard/
+  if (!pattern.test(error.message)) {
+    console.error(error)
+  }
+})
+
 export default router

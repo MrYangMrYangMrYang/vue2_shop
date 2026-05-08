@@ -129,6 +129,24 @@
       </div>
     </div>
 
+    <!-- 未登录 -->
+    <div class="empty-cart" v-else-if="!isLogin">
+      <van-empty
+        class="custom-image"
+        :image="require('@/assets/empty.png')"
+        description="登录后可查看购物车商品"
+      >
+        <van-button
+          round
+          type="danger"
+          class="bottom-button"
+          @click="$router.push('/login').catch(() => {})"
+        >
+          去登录
+        </van-button>
+      </van-empty>
+    </div>
+
     <!-- 空购物车 -->
     <div class="empty-cart" v-else>
       <van-empty
@@ -145,21 +163,6 @@
           去逛逛
         </van-button>
       </van-empty>
-
-      <div class="recommend-section" v-if="!isLogin">
-        <div class="section-title">
-          <span class="line"></span>
-          <span class="text">热门推荐</span>
-          <span class="line"></span>
-        </div>
-        <div class="recommend-list">
-          <div class="rec-item" v-for="i in 3" :key="i" @click="$router.push('/category')">
-            <img src="https://img01.yzcdn.cn/vant/ipad.jpeg" alt="">
-            <p class="rec-name">热门商品 {{ i }}</p>
-            <p class="rec-price">¥99.00</p>
-          </div>
-        </div>
-      </div>
 
       <!-- 底部安全距离 - 防止被底部导航栏遮挡 -->
       <div class="safe-bottom"></div>

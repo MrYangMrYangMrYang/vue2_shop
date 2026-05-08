@@ -6,13 +6,13 @@
       <div class="user-header" :class="{ 'is-login': isLogin }">
         <div class="header-bg"></div>
         <div class="header-content">
-          <div class="avatar-wrapper" @click="isLogin ? null : $router.push('/login')">
+          <div class="avatar-wrapper" @click="isLogin ? null : goLogin()">
             <img :src="isLogin ? (detail.avatar || defaultAvatar) : defaultAvatar" alt="头像" />
             <div v-if="!isLogin" class="avatar-mask">
               <van-icon name="plus" size="20" />
             </div>
           </div>
-          <div class="user-info" @click="isLogin ? null : $router.push('/login')">
+          <div class="user-info" @click="isLogin ? null : goLogin()">
             <div class="name">
               <span>{{ isLogin ? (detail.nickName || '默认昵称') : '点击登录' }}</span>
               <van-tag v-if="isLogin" type="warning" size="medium" round>普通会员</van-tag>
@@ -20,7 +20,7 @@
             <div class="mobile" v-if="isLogin">{{ detail.mobile }}</div>
             <div class="login-tip" v-else>登录后享受更多权益</div>
           </div>
-          <div v-if="isLogin" class="settings-btn" @click="$router.push('/settings')">
+          <div v-if="isLogin" class="settings-btn" @click="go('/settings')">
             <van-icon name="setting-o" size="22" color="#fff" />
           </div>
         </div>
@@ -29,20 +29,20 @@
       <!-- 资产卡片 -->
       <div class="asset-card">
         <div class="asset-items">
-          <div class="asset-item" @click="$router.push('/my-resource?type=points')">
+          <div class="asset-item" @click="go('/my-resource?type=points')">
             <span class="value">{{ formatNumber(detail.points || 0) }}</span>
             <span class="label">我的积分</span>
           </div>
-          <div class="asset-item" @click="$router.push('/my-resource?type=coupon')">
-            <span class="value">{{ detail.coupon_count || 2 }}</span>
+          <div class="asset-item" @click="go('/my-resource?type=coupon')">
+            <span class="value">{{ detail.coupon_count || 0 }}</span>
             <span class="label">优惠券</span>
           </div>
-          <div class="asset-item" @click="$router.push('/my-resource?type=favorite')">
-            <span class="value">{{ detail.favorite_count || 2 }}</span>
+          <div class="asset-item" @click="go('/my-resource?type=favorite')">
+            <span class="value">{{ detail.favorite_count || 0 }}</span>
             <span class="label">我的收藏</span>
           </div>
-          <div class="asset-item" @click="$router.push('/my-resource?type=footprint')">
-            <span class="value">{{ detail.footprint_count || 2 }}</span>
+          <div class="asset-item" @click="go('/my-resource?type=footprint')">
+            <span class="value">{{ detail.footprint_count || 0 }}</span>
             <span class="label">历史足迹</span>
           </div>
         </div>
@@ -50,7 +50,7 @@
 
       <!-- 我的订单 -->
       <div class="section-card">
-        <div class="section-header" @click="$router.push('/order?dataType=all')">
+        <div class="section-header" @click="go('/order?dataType=all')">
           <span class="title">我的订单</span>
           <div class="more">
             <span>全部订单</span>
@@ -58,35 +58,35 @@
           </div>
         </div>
         <div class="order-grid">
-          <div class="order-item" @click="$router.push('/order?dataType=payment')">
+          <div class="order-item" @click="go('/order?dataType=payment')">
             <div class="icon-wrapper payment">
               <van-icon name="clock-o" size="24" />
               <span v-if="orderCounts.payment" class="badge">{{ orderCounts.payment }}</span>
             </div>
             <span class="label">待付款</span>
           </div>
-          <div class="order-item" @click="$router.push('/order?dataType=delivery')">
+          <div class="order-item" @click="go('/order?dataType=delivery')">
             <div class="icon-wrapper delivery">
               <van-icon name="logistics" size="24" />
               <span v-if="orderCounts.delivery" class="badge">{{ orderCounts.delivery }}</span>
             </div>
             <span class="label">待发货</span>
           </div>
-          <div class="order-item" @click="$router.push('/order?dataType=received')">
+          <div class="order-item" @click="go('/order?dataType=received')">
             <div class="icon-wrapper received">
               <van-icon name="send-gift-o" size="24" />
               <span v-if="orderCounts.received" class="badge">{{ orderCounts.received }}</span>
             </div>
             <span class="label">待收货</span>
           </div>
-          <div class="order-item" @click="$router.push('/order?dataType=comment')">
+          <div class="order-item" @click="go('/order?dataType=comment')">
             <div class="icon-wrapper evaluation">
               <van-icon name="chat-o" size="24" />
               <span v-if="orderCounts.comment" class="badge">{{ orderCounts.comment }}</span>
             </div>
             <span class="label">待评价</span>
           </div>
-          <div class="order-item" @click="$router.push('/order?dataType=refund')">
+          <div class="order-item" @click="go('/order?dataType=refund')">
             <div class="icon-wrapper service">
               <van-icon name="after-sale" size="24" />
             </div>
@@ -103,7 +103,7 @@
             <span class="title">我的福利</span>
           </div>
           <div class="service-grid">
-            <div class="service-item" @click="$router.push('/my-resource?type=get-coupon')">
+            <div class="service-item" @click="go('/my-resource?type=get-coupon')">
               <div class="icon-bg coupon">
                 <van-icon name="coupon-o" size="22" />
               </div>
@@ -118,7 +118,7 @@
             <span class="title">我的服务</span>
           </div>
           <div class="service-grid">
-            <div class="service-item" @click="$router.push('/help')">
+            <div class="service-item" @click="go('/help')">
               <div class="icon-bg help">
                 <van-icon name="service-o" size="22" />
               </div>
@@ -144,34 +144,35 @@
  * 6. 数据同步：进入页面时自动分发 Action 获取最新的用户信息详情
  */
 import { mapState, mapActions } from 'vuex'
+import loginConfirm from '@/mixins/loginConfirm'
 
 export default {
   name: 'UserPage',
+  mixins: [loginConfirm],
   data () {
     return {
-      loading: true, // 初始加载状态
-      defaultAvatar: require('@/assets/default-avatar.png'), // 默认头像
-      detail: {} // 用户详情数据对象
+      loading: true,
+      defaultAvatar: require('@/assets/default-avatar.png'),
+      detail: {}
     }
   },
   computed: {
     ...mapState('user', ['userInfo', 'orderCounts']),
-    /**
-     * 根据本地存储的 Token 判断是否登录
-     */
     isLogin () {
       return !!this.userInfo.token
     }
   },
   watch: {
-    /**
-     * 深度监听 Vuex 中 userInfo 的变化
-     * 当用户信息更新 (如修改个人资料返回) 时，实时同步到本地 detail 变量
-     */
     userInfo: {
       handler (newVal) {
         if (newVal && newVal.token) {
-          this.detail = newVal
+          this.detail = {
+            coupon_count: 2,
+            favorite_count: 2,
+            footprint_count: 2,
+            points: 0,
+            ...newVal
+          }
         } else {
           this.detail = {}
         }
@@ -181,7 +182,6 @@ export default {
     }
   },
   created () {
-    // 页面创建时，如果已登录则触发异步 Action 获取后端详细数据
     if (this.isLogin) {
       this.getUserData()
     } else {
@@ -191,10 +191,6 @@ export default {
   methods: {
     ...mapActions('user', ['getUserInfoAction']),
 
-    /**
-     * 数字格式化 (过万展示 w)
-     * @param {Number} num
-     */
     formatNumber (num) {
       if (num >= 10000) {
         return (num / 10000).toFixed(1) + 'w'
@@ -202,9 +198,15 @@ export default {
       return num.toString()
     },
 
-    /**
-     * 调用 Vuex Action 获取用户核心数据
-     */
+    go (path) {
+      if (this.loginConfirm()) return
+      this.$router.push(path).catch(() => {})
+    },
+
+    goLogin () {
+      this.$router.push('/login').catch(() => {})
+    },
+
     async getUserData () {
       try {
         await this.getUserInfoAction()
@@ -227,7 +229,6 @@ export default {
   padding-bottom: 30px;
 }
 
-// 用户头部
 .user-header {
   position: relative;
   overflow: hidden;
@@ -321,7 +322,6 @@ export default {
   }
 }
 
-// 资产卡片
 .asset-card {
   background-color: #fff;
   border-radius: 16px;
@@ -360,7 +360,6 @@ export default {
   }
 }
 
-// 卡片通用样式
 .section-card {
   background-color: #fff;
   border-radius: 16px;
@@ -391,7 +390,6 @@ export default {
   }
 }
 
-// 左右分栏布局
 .section-row {
   display: flex;
   margin: 0 16px 12px;
@@ -399,21 +397,20 @@ export default {
 
   .section-card {
      flex: 1;
-     margin: 0; // 覆盖外部 margin
+     margin: 0;
 
      .service-grid {
-       grid-template-columns: 1fr; // 一行只显示一个
+       grid-template-columns: 1fr;
        gap: 0;
 
        .service-item {
-         align-items: flex-start; // 左对齐
-         padding-left: 4px; // 稍微给点内边距，避免紧贴边缘
+         align-items: flex-start;
+         padding-left: 4px;
        }
      }
    }
 }
 
-// 订单网格
 .order-grid {
   display: flex;
 
@@ -467,7 +464,6 @@ export default {
   }
 }
 
-// 服务网格
 .service-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
